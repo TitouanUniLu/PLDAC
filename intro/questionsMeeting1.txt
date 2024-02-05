@@ -6,4 +6,7 @@ within tensors where the first dimension is time." -> pqs compris ce qui se pass
 -pas vraiment compris l'output de for key in workspace.variables.keys(): 
 -dans le workspace, comment est ce que l'agent 3 a la status done sur les deux derniers temps t alors que ses actions
 choisies au deux deniers temps t sont differents? (True, True mais actions sont 0,1)
+
+
+notebook 2:
 -
