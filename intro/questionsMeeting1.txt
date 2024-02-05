@@ -3,4 +3,7 @@ notebook 1:
 -workspace.get("env/env_obs", 0) -> pour chaque tensor d'observation: Position du chariot, Vitesse du chariot, Angle du poteau, Vitesse angulaire du poteau ? Pas 100% sur
 -"You can observe that we have two time steps for each variable that are stored 
 within tensors where the first dimension is time." -> pqs compris ce qui se passe ici
+-pas vraiment compris l'output de for key in workspace.variables.keys(): 
+-dans le workspace, comment est ce que l'agent 3 a la status done sur les deux derniers temps t alors que ses actions
+choisies au deux deniers temps t sont differents? (True, True mais actions sont 0,1)
 -
