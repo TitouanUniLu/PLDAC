@@ -1,0 +1,3176 @@
+The following text is a Git repository with code. The structure of the text are sections that begin with ----!@#$----, followed by a single line containing the file path and file name, followed by a variable amount of lines containing the file contents. The text representing the Git repository ends when the symbols --END-- are encounted. Any further text beyond --END-- are meant to be interpreted as instructions using the aforementioned Git repository as context.
+----!@#$----
+.pre-commit-config.yaml
+default_language_version:
+    python: python3.11
+
+default_stages: [commit, push]
+
+exclude: ".idea"
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: 'v4.4.0'
+  hooks:
+    - id: check-added-large-files
+      args: [ "--maxkb=700" ]
+    - id: check-yaml
+    - id: end-of-file-fixer
+    - id: trailing-whitespace
+    - id: requirements-txt-fixer
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: 'v0.0.260'
+  hooks:
+    - id: ruff
+      args: [--verbose, --statistics]
+- repo: https://github.com/psf/black
+  rev: '23.3.0'
+  hooks:
+    - id: black
+      args: [--verbose]
+
+----!@#$----
+CODE_OF_CONDUCT.md
+
+# Contributor Covenant Code of Conduct
+
+## Our Pledge
+
+We as members, contributors, and leaders pledge to make participation in our
+community a harassment-free experience for everyone, regardless of age, body
+size, visible or invisible disability, ethnicity, sex characteristics, gender
+identity and expression, level of experience, education, socio-economic status,
+nationality, personal appearance, race, caste, color, religion, or sexual
+identity and orientation.
+
+We pledge to act and interact in ways that contribute to an open, welcoming,
+diverse, inclusive, and healthy community.
+
+## Our Standards
+
+Examples of behavior that contributes to a positive environment for our
+community include:
+
+* Demonstrating empathy and kindness toward other people
+* Being respectful of differing opinions, viewpoints, and experiences
+* Giving and gracefully accepting constructive feedback
+* Accepting responsibility and apologizing to those affected by our mistakes,
+  and learning from the experience
+* Focusing on what is best not just for us as individuals, but for the overall
+  community
+
+Examples of unacceptable behavior include:
+
+* The use of sexualized language or imagery, and sexual attention or advances of
+  any kind
+* Trolling, insulting or derogatory comments, and personal or political attacks
+* Public or private harassment
+* Publishing others' private information, such as a physical or email address,
+  without their explicit permission
+* Other conduct which could reasonably be considered inappropriate in a
+  professional setting
+
+## Enforcement Responsibilities
+
+Community leaders are responsible for clarifying and enforcing our standards of
+acceptable behavior and will take appropriate and fair corrective action in
+response to any behavior that they deem inappropriate, threatening, offensive,
+or harmful.
+
+Community leaders have the right and responsibility to remove, edit, or reject
+comments, commits, code, wiki edits, issues, and other contributions that are
+not aligned to this Code of Conduct, and will communicate reasons for moderation
+decisions when appropriate.
+
+## Scope
+
+This Code of Conduct applies within all community spaces, and also applies when
+an individual is officially representing the community in public spaces.
+Examples of representing our community include using an official e-mail address,
+posting via an official social media account, or acting as an appointed
+representative at an online or offline event.
+
+## Enforcement
+
+Instances of abusive, harassing, or otherwise unacceptable behavior may be
+reported to the community leaders responsible for enforcement.
+All complaints will be reviewed and investigated promptly and fairly.
+
+All community leaders are obligated to respect the privacy and security of the
+reporter of any incident.
+
+## Enforcement Guidelines
+
+Community leaders will follow these Community Impact Guidelines in determining
+the consequences for any action they deem in violation of this Code of Conduct:
+
+### 1. Correction
+
+**Community Impact**: Use of inappropriate language or other behavior deemed
+unprofessional or unwelcome in the community.
+
+**Consequence**: A private, written warning from community leaders, providing
+clarity around the nature of the violation and an explanation of why the
+behavior was inappropriate. A public apology may be requested.
+
+### 2. Warning
+
+**Community Impact**: A violation through a single incident or series of
+actions.
+
+**Consequence**: A warning with consequences for continued behavior. No
+interaction with the people involved, including unsolicited interaction with
+those enforcing the Code of Conduct, for a specified period of time. This
+includes avoiding interactions in community spaces as well as external channels
+like social media. Violating these terms may lead to a temporary or permanent
+ban.
+
+### 3. Temporary Ban
+
+**Community Impact**: A serious violation of community standards, including
+sustained inappropriate behavior.
+
+**Consequence**: A temporary ban from any sort of interaction or public
+communication with the community for a specified period of time. No public or
+private interaction with the people involved, including unsolicited interaction
+with those enforcing the Code of Conduct, is allowed during this period.
+Violating these terms may lead to a permanent ban.
+
+### 4. Permanent Ban
+
+**Community Impact**: Demonstrating a pattern of violation of community
+standards, including sustained inappropriate behavior, harassment of an
+individual, or aggression toward or disparagement of classes of individuals.
+
+**Consequence**: A permanent ban from any sort of public interaction within the
+community.
+
+## Attribution
+
+This Code of Conduct is adapted from the [Contributor Covenant][homepage],
+version 2.1, available at
+[https://www.contributor-covenant.org/version/2/1/code_of_conduct.html][v2.1].
+
+Community Impact Guidelines were inspired by
+[Mozilla's code of conduct enforcement ladder][Mozilla CoC].
+
+For answers to common questions about this code of conduct, see the FAQ at
+[https://www.contributor-covenant.org/faq][FAQ]. Translations are available at
+[https://www.contributor-covenant.org/translations][translations].
+
+[homepage]: https://www.contributor-covenant.org
+[v2.1]: https://www.contributor-covenant.org/version/2/1/code_of_conduct.html
+[Mozilla CoC]: https://github.com/mozilla/diversity
+[FAQ]: https://www.contributor-covenant.org/faq
+[translations]: https://www.contributor-covenant.org/translations
+
+----!@#$----
+CONTRIBUTING.md
+# Contributing to `SaBBLium`
+
+We want to make contributing to this project as easy and transparent as possible.
+In order to contribute to this repository you will need to use pull requests, see below
+
+To know more about the project go to the [README](README.md) first.
+
+## Pre-commit hooks
+
+Pre-commits hooks have been configured for this project using the
+[pre-commit](https://pre-commit.com/) library:
+
+- [black](https://github.com/psf/black) python formatter
+- [flake8](https://flake8.pycqa.org/en/latest/) python linter
+
+To get them going on your side, first install pre-commit:
+
+```bash
+pip install pre-commit
+```
+
+Then run the following commands from the root directory of this repository:
+
+```bash
+pre-commit install
+pre-commit run --all-files
+```
+
+These pre-commits are applied to all the files, except the directory tmp/
+(see .pre-commit-config.yaml)
+
+
+## Pull Requests
+
+We actively welcome your pull requests.
+
+1. Fork the repo and create your branch from `main`.
+2. If you've added code that should be tested, add tests.
+3. If you've changed APIs, update the documentation.
+4. Ensure the test suite passes.
+5. Make sure your code lints.
+
+## Issues
+
+We use GitHub issues to track public bugs. Please ensure your description is
+clear and has sufficient instructions to be able to reproduce the issue.
+
+
+## License
+By contributing to `SaBBLium`, you agree that your contributions will be licensed
+under the LICENSE file in the root directory of this source tree.
+
+----!@#$----
+output.txt
+
+----!@#$----
+pyproject.toml
+[project]
+name = "SaBBLium"
+dynamic = ["version"]
+authors = [{ name = "Ludovic Denoyer", email = "denoyer@fb.com" },
+    { name = "Alfredo de la Fuente" },
+    { name = "Song Duong" },
+    { name = "Jean-Baptiste Gaya", email = "jbgaya@fb.com" },
+    { name = "Pierre-Alexandre Kamienny", email = "pakamienny@fb.com" },
+    { name = "Daniel H. Thompson" },
+    { name = "Olivier Sigaud", email = "olivier.sigaud@isir.upmc.fr" },
+    { name = "Benjamin Piwowarski", email = "benjamin.piwowarski@isir.upmc.fr" },
+    { name = "Mathis Koroglu", email = "mathis.koroglu@etu.sorbonne-universite.fr" }]
+maintainers = [{ name = "Mathis Koroglu", email = "mathis.koroglu@etu.sorbonne-universite.fr" }]
+
+description = "SaBBLium is a Flexible and Simple Library for Learning Sequential Agents"
+keywords = ["sequential learning", "reinforcement learning"]
+
+readme = "README.md"
+license = { file = "LICENSE" }
+
+requires-python = ">=3.10"
+classifiers = ["Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = ["torchvision",
+    "gymnasium>=0.28.1",
+    "hydra-core"]
+
+[project.optional-dependencies]
+logger = ["tensorboard", "wandb", "pandas", "tqdm"]
+plot = ["matplotlib", "seaborn"]
+dev = ["pre-commit", "black", "ruff"]
+all = [
+    "tensorboard",
+    "wandb",
+    "pandas",
+    "tqdm",
+    "matplotlib",
+    "seaborn",
+    "pre-commit",
+    "black",
+    "ruff"]
+
+
+[project.urls]
+repository = "https://github.com/Arlaz/SaBBLium"
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["sabblium*"]
+namespaces = true
+
+[tool.setuptools_scm]
+write_to = "sabblium/_version.py"
+
+[tool.black]
+# Black configuration
+line-length = 88
+target-version = ['py310', 'py311']
+
+[tool.ruff]
+# Ruff configuration
+line-length = 88
+fix = true
+target-version = "py311"
+extend-exclude = [".idea"]
+
+[tool.ruff.isort]
+lines-after-imports = 2
+known-first-party = ["sabblium"]
+
+----!@#$----
+README.md
+# `SaBBLium`: A Flexible and Simple Library for Learning Sequential Agents (including Reinforcement Learning)
+
+## TL;DR :
+
+`SaBBLium` is a lightweight library extending PyTorch modules for developing **sequential decision models**.
+It can be used for **Reinforcement Learning** (including model-based with differentiable environments,
+multi-agent RL, etc...), but also in a supervised/unsupervised learning settings
+(for instance for NLP, Computer Vision, etc...).
+It is derived from [`SaLinA`](https://github.com/facebookresearch/salina)  and [`BBRL`](https://github.com/osigaud/bbrl)
+* It allows to write very complex sequential models (or policies) in few lines
+* main difference with `BBRL` and `SaLinA` is that `SaBBLium` is compatible with `Gymnasium`:
+  * No more `NoAutoResetGymAgent` or `AutoResetGymAgent` just a `GymAgent` that can be used in both cases depending on wether the `Gymnasium` environment contains an `AutoResetWrapper` or not.
+  * You should now use `env/stopped` instead of `env/done` as a stop variable
+* No multiprocessing / no remote agent or workspace yet
+* You can easily save and load your models with `agent.save` and `Agent.load` by making them inherit from `SerializableAgent`, if they are not serializable, you have to override the `serialize` method.
+* An ImageGymAgent has been added with adapted serialization
+* Many typos have been fixed and type hints have been added
+
+## Citing `SaBBLium`
+`SaBBLium` being inspired from [`SaLinA`](https://github.com/facebookresearch/salina), please use this bibtex if you want to cite `SaBBLium` in your publications:
+
+
+Please use this bibtex if you want to cite this repository in your publications:
+
+Link to the paper: [SaLinA: Sequential Learning of Agents](https://arxiv.org/abs/2110.07910)
+
+```
+    @misc{salina,
+        author = {Ludovic Denoyer, Alfredo de la Fuente, Song Duong, Jean-Baptiste Gaya, Pierre-Alexandre Kamienny, Daniel H. Thompson},
+        title = {SaLinA: Sequential Learning of Agents},
+        year = {2021},
+        publisher = {Arxiv},salina_cl
+        howpublished = {\url{https://gitHub.com/facebookresearch/salina}},
+    }
+```
+
+## Quick Start
+
+* Just clone the repo and
+* with pip 21.3 or newer : `pip install -e .`
+
+**For development, set up [pre-commit](https://pre-commit.com) hooks:**
+
+* Run `pip install pre-commit`
+    * or `conda install -c conda-forge pre-commit`
+    * or `brew install pre-commit`
+* In the top directory of the repo, run `pre-commit install` to set up the git hook scripts
+* Now `pre-commit` will run automatically on `git commit`!
+* Currently isort, black are used, in that order
+
+## Organization of the repo
+
+* [sabblium](sabblium) is the core library
+  * [sabblium.agents](sabblium/agents) is the catalog of agents (the same as `torch.nn` but for agents)
+
+## Dependencies
+
+`SaBBLium` utilizes [`PyTorch`](https://github.com/pytorch/pytorch), [`Hydra`](https://github.com/facebookresearch/hydra) for configuring experiments, and [`Gymnasium`](https://github.com/Farama-Foundation/Gymnasium) for reinforcement learning environments.
+
+## Note on the logger
+
+We provide a simple Logger that logs in both [`TensorBoard`](https://github.com/tensorflow/tensorboard) format and [`wandb`](https://github.com/wandb/wandb), but also as pickle files that can be re-read to make tables and figures. See [logger](sabblium/logger.py). This logger can be easily replaced by any other logger.
+
+## Description
+
+**Sequential Decision Making is much more than Reinforcement Learning**
+
+* Sequential Decision Making is about interactions:
+ * Interaction with data (e.g. attention-models, decision tree, cascade models, active sensing, active learning, recommendation, etc….)
+ * Interaction with an environment (e.g. games, control)
+ * Interaction with humans (e.g. recommender systems, dialog systems, health systems, …)
+ * Interaction with a model of the world (e.g. simulation)
+ * Interaction between multiple entities (e.g. multi-agent RL)
+
+
+### What `SaBBLium` is
+
+* A sandbox for developing sequential models at scale.
+
+* A small (300 hundred lines) 'core' code that defines everything you will use to implement `agents` involved in sequential decision learning systems.
+  * It is easy to understand and use since it keeps the main principles of pytorch, just extending [`nn.Module`](https://pytorch.org/docs/stable/nn.html) to [`Agent`](/sabblium/agent.py) in order to handle the temporal dimension.
+* A set of **agents** that can be combined (like pytorch modules) to obtain complex behaviors
+* A set of references implementations and examples in different domains **Reinforcement Learning**, **Imitation Learning**, **Computer Vision**, with more to come...
+
+### What `SaBBLium` is not
+
+* Yet another reinforcement learning framework: `SaBBLium` is focused on **sequential decision-making in general**. It can be used for RL (which is our main current use-case), but also for supervised learning, attention models, multi-agent learning, planning, control, cascade models, recommender systems, among other use cases.
+* A `library`: SaBBLium is just a small layer on top of pytorch that encourages good practices for implementing sequential models. Accordingly, it is very simple to understand and use, while very powerful.
+* A `framework`: SaBBLium is not a framework, it is just a set of tools that can be used to implement any kind of sequential decision-making system.
+
+## License
+
+`SaBBLium` is released under the MIT license. See [LICENSE](LICENSE) for additional details about it.
+
+----!@#$----
+requirements.txt
+--index-url https://pypi.python.org/simple/
+-e .
+
+----!@#$----
+ROADMAP.md
+`SaBBLium` roadmap
+===================
+
+Under Development
+--------------------------
+
+* see github issues
+
+----!@#$----
+.idea\.gitignore
+# Default ignored files
+/shelf/
+/workspace.xml
+# Datasource local storage ignored files
+/dataSources/
+/dataSources.local.xml
+
+----!@#$----
+.idea\.name
+SaBBLium
+----!@#$----
+.idea\modules.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/sabblium.iml" filepath="$PROJECT_DIR$/.idea/sabblium.iml" />
+    </modules>
+  </component>
+</project>
+
+----!@#$----
+.idea\other.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PySciProjectComponent">
+    <option name="PY_SCI_VIEW_SUGGESTED" value="true" />
+  </component>
+</project>
+
+----!@#$----
+.idea\sabblium.iml
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="PYTHON_MODULE" version="4">
+  <component name="NewModuleRootManager">
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/sabblium" isTestSource="false" />
+    </content>
+    <orderEntry type="sourceFolder" forTests="false" />
+  </component>
+  <component name="PyDocumentationSettings">
+    <option name="format" value="GOOGLE" />
+    <option name="myDocStringFormat" value="Google" />
+  </component>
+  <component name="PyNamespacePackagesService">
+    <option name="namespacePackageFolders">
+      <list>
+        <option value="$MODULE_DIR$/sabblium/agents" />
+        <option value="$MODULE_DIR$/sabblium/agents/envs" />
+        <option value="$MODULE_DIR$/sabblium/agents/rl" />
+      </list>
+    </option>
+  </component>
+</module>
+----!@#$----
+.idea\vcs.xml
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="VcsDirectoryMappings">
+    <mapping directory="" vcs="Git" />
+  </component>
+</project>
+
+----!@#$----
+.idea\codeStyles\codeStyleConfig.xml
+<component name="ProjectCodeStyleConfiguration">
+  <state>
+    <option name="USE_PER_PROJECT_SETTINGS" value="true" />
+  </state>
+</component>
+
+----!@#$----
+.idea\codeStyles\Project.xml
+<component name="ProjectCodeStyleConfiguration">
+  <code_scheme name="Project" version="173">
+    <Python>
+      <option name="OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS" value="true" />
+      <option name="OPTIMIZE_IMPORTS_CASE_INSENSITIVE_ORDER" value="true" />
+    </Python>
+  </code_scheme>
+</component>
+
+----!@#$----
+.idea\copyright\profiles_settings.xml
+<component name="CopyrightManager">
+  <settings default="SaBBLium">
+    <module2copyright>
+      <element module="Project Files" copyright="SaBBLium" />
+    </module2copyright>
+    <LanguageOptions name="Python">
+      <option name="fileTypeOverride" value="3" />
+      <option name="block" value="false" />
+      <option name="separateAfter" value="true" />
+      <option name="lenBefore" value="0" />
+      <option name="lenAfter" value="0" />
+    </LanguageOptions>
+  </settings>
+</component>
+----!@#$----
+.idea\copyright\SaBBLium.xml
+<component name="CopyrightManager">
+  <copyright>
+    <option name="notice" value="&amp;#36;project.name&#10;&amp;#36;file.fileName&#10;&#10;Copyright © Facebook, Inc. and its affiliates.&#10;Copyright © Sorbonne University.&#10;&#10;This source code is licensed under the MIT license found in the&#10;LICENSE file in the root directory of this source tree." />
+    <option name="myName" value="SaBBLium" />
+  </copyright>
+</component>
+----!@#$----
+.idea\inspectionProfiles\Project_Default.xml
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="PyArgumentEqualDefaultInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyAugmentAssignmentInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyCompatibilityInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="ourVersions">
+        <value>
+          <list size="2">
+            <item index="0" class="java.lang.String" itemvalue="3.10" />
+            <item index="1" class="java.lang.String" itemvalue="3.11" />
+          </list>
+        </value>
+      </option>
+    </inspection_tool>
+    <inspection_tool class="PyMandatoryEncodingInspection" enabled="true" level="WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyMissingOrEmptyDocstringInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+    <inspection_tool class="PyMissingTypeHintsInspection" enabled="true" level="WEAK WARNING" enabled_by_default="true" />
+  </profile>
+</component>
+----!@#$----
+sabblium\agent.py
+#  SaBBLium ― A Python library for building and simulating multi-agent systems.
+#
+#  Copyright © Facebook, Inc. and its affiliates.
+#  Copyright © Sorbonne University.
+#
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+#
+
+import copy
+import pickle
+import time
+from abc import ABC
+from typing import Any, IO, Self
+
+from torch import Tensor
+import torch.nn as nn
+
+from .workspace import Workspace
+
+
+class Agent(nn.Module, ABC):
+    """An `Agent` is a `torch.nn.Module` that reads and writes into a `sabblium.Workspace`"""
+
+    def __init__(self, name: str | None = None, **kwargs) -> None:
+        """To create a new Agent
+
+        Args:
+            name ([str | None]): An agent can have a name that will allow to perform operations on agents that are composed into more complex agents.
+        """
+        super().__init__(**kwargs)
+        self.workspace: Workspace | None = None
+        self._name: str | None = name
+        self.__trace_file: IO | None = None
+
+    def set_name(self, name: str) -> None:
+        """Set the name of this agent
+
+        Args:
+            name (str): The name
+        """
+        self._name = name
+
+    def get_name(self) -> str | None:
+        """Get the name of the agent
+
+        Returns:
+            str: the name
+        """
+        return self._name
+
+    def set_trace_file(self, filename: str) -> None:
+        print("[TRACE]: Tracing agent in file " + filename)
+        self.__trace_file = open(filename, "wt")
+
+    def __call__(self, workspace: Workspace, **kwargs) -> Any:
+        """Execute an agent of a `sabblium.Workspace`
+
+        Args:
+            workspace (sabblium.Workspace): the workspace on which the agent operates.
+        """
+        if workspace is None:
+            raise TypeError(
+                "[{}.__call__] workspace must not be None".format(self.__name__)
+            )
+        self.workspace = workspace
+        ret = self.forward(**kwargs)
+        self.workspace = None
+        return ret
+
+    def forward(self, **kwargs) -> Any:
+        """The generic function to override when defining a new agent"""
+        raise NotImplementedError("Your agent must override forward")
+
+    def clone(self) -> Self:
+        """Create a clone of the agent
+
+        Returns:
+            sabblium.Agent: A clone
+        """
+        self.zero_grad()
+        return copy.deepcopy(self)
+
+    def get(self, index: str | tuple[str, int]) -> Tensor:
+        """Returns the value of a particular variable in the agent workspace
+
+        Args:
+            index (str or tuple(str,int)): if str, returns the variable workspace[str].
+            If tuple(var_name, t), returns workspace[var_name] at time t
+        """
+        if self.__trace_file is not None:
+            t: float = time.time()
+            self.__trace_file.write(
+                str(self) + " type = " + str(type(self)) + " time = ",
+                t,
+                " get ",
+                index,
+                "\n",
+            )
+        if isinstance(index, str):
+            return self.workspace.get_full(index)
+        elif isinstance(index, tuple):
+            return self.workspace.get(index[0], index[1])
+        else:
+            raise TypeError("index must be either str or tuple(str, int)".format())
+
+    def get_time_truncated(self, var_name: str, from_time: int, to_time: int) -> Tensor:
+        """Return a variable truncated between from_time and to_time"""
+        return self.workspace.get_time_truncated(var_name, from_time, to_time)
+
+    def set(self, index: str | tuple[str, int], value: Tensor) -> None:
+        """Write a variable in the workspace
+
+        Args:
+            index (str or tuple(str,int)):
+            value (torch.Tensor): the value to write.
+        """
+        if self.__trace_file is not None:
+            t = time.time()
+            self.__trace_file.write(
+                str(self) + " type = " + str(type(self)) + " time = ",
+                t,
+                " set ",
+                index,
+                " = ",
+                value.size(),
+                "/",
+                value.dtype,
+                "\n",
+            )
+        if isinstance(index, str):
+            self.workspace.set_full(index, value)
+        elif isinstance(index, tuple):
+            self.workspace.set(var_name=index[0], t=index[1], v=value)
+        else:
+            raise TypeError("index must be either str or tuple(str, int)".format())
+
+    def get_by_name(self, n: str) -> list[Self]:
+        """Returns the list of agents included in this agent that have a particular name."""
+        if n == self._name:
+            return [self]
+        return []
+
+
+class TimeAgent(Agent, ABC):
+    """
+    `TimeAgent` is used as a convention to represent agents that
+    use a time index in their `__call__` function (not mandatory)
+    """
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+
+    def forward(self, t: int, **kwargs) -> Any:
+        raise NotImplementedError(
+            "Your TemporalAgent must override forward with a time index"
+        )
+
+
+class SerializableAgent(Agent, ABC):
+    """
+    `SerializableAgent` is used as a convention to represent agents that are serializable (not mandatory)
+    You can override the serialize method to return the agent without the attributes that are not serializable.
+    """
+
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+
+    def serialize(self) -> Self:
+        """
+        Return the `SerializableAgent` without the unsersializable attributes
+        """
+        try:
+            return self
+        except Exception as e:
+            raise NotImplementedError(
+                "Could not serialize your {c} SerializableAgent because of {e}\n"
+                "You have to override the serialize method".format(
+                    c=self.__class__.__name__, e=e
+                )
+            )
+
+    def save(self, filename: str) -> None:
+        """Save the agent to a file
+
+        Args:
+            filename (str): The filename to use
+        """
+        try:
+            with open(filename, "wb") as f:
+                pickle.dump(self.serialize(), f, pickle.DEFAULT_PROTOCOL)
+        except Exception as e:
+            raise Exception(
+                "Could not save agent to file {filename} because of {e} \n"
+                "Make sure to have properly overriden the serialize method.".format(
+                    filename=filename, e=e
+                )
+            )
+
+
+def load(filename: str) -> Agent:
+    """Load the agent from a file
+
+    Args:
+        filename (str): The filename to use
+
+    Returns:
+        sabblium.Agent: The agent or a subclass of it
+    """
+    try:
+        with open(filename, "rb") as f:
+            return pickle.load(f)
+    except Exception as e:
+        raise Exception(
+            "Could not load agent from file {filename} because of {e}".format(
+                filename=filename, e=e
+            )
+        )
+
+----!@#$----
+sabblium\logger.py
+#  SaBBLium ― A Python library for building and simulating multi-agent systems.
+#
+#  Copyright © Facebook, Inc. and its affiliates.
+#  Copyright © Sorbonne University.
+#
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+#
+
+import bz2
+import pickle
+import time
+from typing import Iterable, Self
+
+import numpy as np
+import pandas as pd
+import wandb
+from omegaconf import DictConfig
+from torch import Tensor
+from torch.utils.tensorboard import SummaryWriter
+from tqdm import tqdm
+
+
+class TFPrefixLogger:
+    def __init__(self, prefix: str, logger):
+        self.logger = logger
+        self.prefix: str = prefix
+
+    def add_images(self, name, value, iteration):
+        self.logger.add_images(self.prefix + name, value, iteration)
+
+    def add_figure(self, name, value, iteration):
+        self.logger.add_figure(self.prefix + name, value, iteration)
+
+    def add_scalar(self, name, value, iteration):
+        self.logger.add_scalar(self.prefix + name, value, iteration)
+
+    def add_video(self, name, value, iteration, fps=10):
+        self.logger.add_video(self.prefix + name, value, iteration, fps)
+
+    def message(self, msg, from_name=""):
+        self.logger.message(msg, from_name=self.prefix + from_name)
+
+    def debug(self, msg, from_name=""):
+        self.logger.debug(msg, from_name=self.prefix + from_name)
+
+    def get_logger(self, prefix):
+        return TFPrefixLogger(self.prefix + prefix, self.logger)
+
+    def close(self):
+        pass
+
+
+class TFLogger(SummaryWriter):
+    """A logger that stores informations both in tensorboard and CSV formats"""
+
+    def __init__(
+        self,
+        log_dir: str = "./",
+        hps: dict | None = None,
+        cache_size: int = 10000,
+        every_n_seconds: int | None = None,
+        modulo: int = 1,
+        verbose: bool = False,
+        use_zip: bool = True,
+        save_tensorboard: bool = True,
+    ):
+        SummaryWriter.__init__(self, log_dir=log_dir)
+        self.save_tensorboard: bool = save_tensorboard
+        self.use_zip: bool = use_zip
+        self.save_every = cache_size
+        self.modulo: int = modulo
+        self.written_values = {}
+        self.log_dir: str = log_dir
+        self.every_n_seconds: int = every_n_seconds
+        if self.every_n_seconds is None:
+            print(
+                "[Deprecated] sabblium.logger: use 'every_n_seconds' instead of cache_size"
+            )
+        else:
+            self.save_every = None
+        self._start_time = time.time()
+        self.verbose: bool = verbose
+
+        self.picklename = log_dir + "/db.pickle.bzip2"
+        if not self.use_zip:
+            self.picklename = log_dir + "/db.pickle"
+        self.to_pickle = []
+        if hps is not None and len(hps) > 0:
+            f = open(log_dir + "/params.json", "wt")
+            f.write(str(hps) + "\n")
+            f.close()
+
+            outfile = open(log_dir + "/params.pickle", "wb")
+            pickle.dump(hps, outfile)
+            outfile.close()
+            self.add_text("Hyperparameters", str(hps))
+
+    def _omegaconf_to_dict(self, hps):
+        d = {}
+        for k, v in hps.items():
+            if isinstance(v, DictConfig):
+                d[k] = self._omegaconf_to_dict(v)
+            else:
+                d[k] = v
+        return d
+
+    def _to_dict(self, h):
+        if isinstance(h, dict):
+            return {k: self._to_dict(v) for k, v in h.items()}
+        if isinstance(h, DictConfig):
+            return {k: self._to_dict(v) for k, v in h.items()}
+        else:
+            return h
+
+    def save_hps(self, hps, verbose=True):
+        hps = self._to_dict(hps)
+        if verbose:
+            print(hps)
+        f = open(self.log_dir + "/params.json", "wt")
+        f.write(str(hps) + "\n")
+        f.close()
+
+        outfile = open(self.log_dir + "/params.pickle", "wb")
+        pickle.dump(hps, outfile)
+        outfile.close()
+        self.add_text("Hyperparameters", str(hps))
+
+    def get_logger(self, prefix):
+        return TFPrefixLogger(prefix, self)
+
+    @staticmethod
+    def message(msg: str, from_name: str = ""):
+        print("[", from_name, "]: ", msg)
+
+    @staticmethod
+    def debug(msg: str, from_name: str = ""):
+        print("[DEBUG] [", from_name, "]: ", msg)
+
+    def _to_pickle(self, name: str, value, iteration):
+        self.to_pickle.append((name, iteration, value))
+
+        if self.every_n_seconds is not None:
+            if time.time() - self._start_time > self.every_n_seconds:
+                if self.use_zip:
+                    f = bz2.BZ2File(self.picklename, "ab")
+                    pickle.dump(self.to_pickle, f)
+                    f.close()
+                else:
+                    f = open(self.picklename, "ab")
+                    pickle.dump(self.to_pickle, f)
+                    f.close()
+                self._start_time = time.time()
+                self.to_pickle = []
+        else:
+            if len(self.to_pickle) > self.save_every:
+                if self.use_zip:
+                    f = bz2.BZ2File(self.picklename, "ab")
+                    pickle.dump(self.to_pickle, f)
+                    f.close()
+                else:
+                    f = open(self.picklename, "ab")
+                    pickle.dump(self.to_pickle, f)
+                    f.close()
+                self.to_pickle = []
+
+    def add_images(self, name, value, iteration):
+        iteration = int(iteration / self.modulo) * self.modulo
+        if (name, iteration) in self.written_values:
+            return
+        else:
+            self.written_values[(name, iteration)] = True
+
+        self._to_pickle(name, value, iteration)
+        if self.save_tensorboard:
+            SummaryWriter.add_images(self, name, value, iteration)
+
+    def add_figure(self, name: str, value, iteration: int):
+        iteration = int(iteration / self.modulo) * self.modulo
+        if (name, iteration) in self.written_values:
+            return
+        else:
+            self.written_values[(name, iteration)] = True
+
+        self._to_pickle(name, value, iteration)
+        if self.save_tensorboard:
+            SummaryWriter.add_figure(self, name, value, iteration)
+
+    def add_scalar(self, name: str, value: int | float, iteration: int):
+        iteration = int(iteration / self.modulo) * self.modulo
+        if (name, iteration) in self.written_values:
+            return
+        else:
+            self.written_values[(name, iteration)] = True
+
+        self._to_pickle(name, value, iteration)
+        if self.verbose:
+            print("['" + name + "' at " + str(iteration) + "] = " + str(value))
+
+        if isinstance(value, int) or isinstance(value, float):
+            if self.save_tensorboard:
+                SummaryWriter.add_scalar(self, name, value, iteration)
+
+    def add_video(self, name: str, value: Tensor, iteration: int, fps=10):
+        iteration = int(iteration / self.modulo) * self.modulo
+        if (name, iteration) in self.written_values:
+            return
+        else:
+            self.written_values[(name, iteration)] = True
+
+        self._to_pickle(name, value.numpy(), iteration)
+        if self.save_tensorboard:
+            SummaryWriter.add_video(self, name, value, iteration, fps=fps)
+
+    def close(self):
+        if len(self.to_pickle) > 0:
+            if self.use_zip:
+                f = bz2.BZ2File(self.picklename, "ab")
+                pickle.dump(self.to_pickle, f)
+                f.close()
+            else:
+                f = open(self.picklename, "ab")
+                pickle.dump(self.to_pickle, f)
+                f.close()
+            self.to_pickle = []
+
+        SummaryWriter.close(self)
+
+        f = open(self.log_dir + "/done", "wt")
+        f.write("Done\n")
+        f.close()
+
+
+class WandbLogger:
+    """A wandb logger"""
+
+    def __init__(
+        self,
+        project: str | None = None,
+        group: str | None = None,
+        job_type: str | None = None,
+        tags: str = "",
+        every_n_seconds: bool = None,
+        verbose: bool = False,
+        log_loss: bool = False,
+        **kwargs,
+    ) -> None:
+        wandb.init(
+            project=project,
+            group=group,
+            job_type=job_type,
+            tags=tags.split("_"),
+        )
+        self.logs = {}
+        self.every_n_seconds = every_n_seconds
+        self.save_time = -float("inf")
+        self.verbose = verbose
+        self.log_loss = log_loss
+
+    def _to_dict(self, h: dict | DictConfig) -> dict:
+        if isinstance(h, dict) or isinstance(h, DictConfig):
+            return {k: self._to_dict(v) for k, v in h.items()}
+        else:
+            return h
+
+    def save_hps(self, hps, verbose=True) -> None:
+        print(hps)
+        wandb.config.update(self._to_dict(hps))
+
+    def get_logger(self, prefix):
+        return self
+
+    @staticmethod
+    def message(msg, from_name="") -> None:
+        print("[", from_name, "]: ", msg)
+
+    def add_images(self, name, value, iteration) -> None:
+        pass
+
+    def add_figure(self, name, value, iteration) -> None:
+        pass
+
+    def add_scalar(self, name, value, iteration) -> None:
+        if ("loss" in name) and (not self.log_loss):
+            pass
+        else:
+            if self.verbose:
+                print("['" + name + "' at " + str(iteration) + "] = " + str(value))
+            if "/" in name:
+                iteration_name = "/".join(name.split("/")[:-1] + ["iteration"])
+            else:
+                iteration_name = "iteration"
+            self.logs[name] = value
+            self.logs[iteration_name] = iteration
+            t = time.time()
+            if ((t - self.save_time) > self.every_n_seconds) or (
+                "evaluation/iteration" in self.logs
+            ):
+                wandb.log(self.logs, commit=True)
+                self.save_time = t
+                self.logs = {}
+
+    def add_video(self, name, value, iteration, fps=10) -> None:
+        pass
+
+    @staticmethod
+    def add_html(name, value) -> None:
+        wandb.log({name: wandb.Html(value)})
+
+    def close(self) -> None:
+        pass
+
+
+class Log:
+    def __init__(self, hps, values):
+        self.hps = hps
+        self.values = values
+        max_length = max([len(v) for v in self.values])
+        for k in values:
+            while len(values[k]) < max_length:
+                values[k].append(None)
+        self.length = max_length
+
+    def to_xy(self, name: str):
+        assert name in self.values
+        x, y = [], []
+        for k, v in enumerate(self.values[name]):
+            if v is not None:
+                x.append(k)
+                y.append(v)
+        return x, y
+
+    def to_dataframe(self, with_hps=False):
+        max_len = np.max([len(k) for v, k in self.values.items()])
+        nv = {}
+        for k, v in self.values.items():
+            nnv = [None] * (max_len - len(v))
+            nv[k] = v + nnv
+        self.values = nv
+        it = list(np.arange(max_len))
+        d = {**self.values, **{"iteration": it}}
+        _pd = pd.DataFrame(d)
+        if with_hps:
+            for k in self.hps:
+                _pd["_hp/" + k] = self.hps[k]
+        return _pd
+
+    def get_at(self, name: str, iteration: int):
+        return self.values[name][iteration]
+
+    def get(self, name: str, keep_none: bool = False):
+        v = self.values[name]
+        if not keep_none:
+            return [k for k in v if k is not None]
+        else:
+            return v
+
+    def replace_None_(self, name: str):
+        v = self.values[name]
+        last_v = None
+        first_v = None
+        r = []
+        for k in range(len(v)):
+            if v[k] is None:
+                r.append(last_v)
+            else:
+                r.append(v[k])
+                if last_v is None:
+                    first_v = v[k]
+                last_v = v[k]
+
+        p = 0
+        while r[p] is None:
+            r[p] = first_v
+            p += 1
+        self.values[name] = r
+
+    def max(self, name: str):
+        v = self.values[name]
+        vv = [k for k in v if k is not None]
+        return np.max(vv)
+
+    def min(self, name: str):
+        v = self.values[name]
+        vv = [k for k in v if k is not None]
+        return np.min(vv)
+
+    def argmin(self, name: str):
+        v = self.values[name]
+        vv = [k for k in v if k is not None]
+        _max = np.max(vv)
+
+        for k in range(len(v)):
+            if v[k] is None:
+                vv.append(_max + 1.0)
+            else:
+                vv.append(v[k])
+        return np.argmin(vv)
+
+    def argmax(self, name: str):
+        v = self.values[name]
+        vv = [k for k in v if k is not None]
+        _min = np.min(vv)
+        vv = []
+        for k in range(len(v)):
+            if v[k] is None:
+                vv.append(_min - 1.0)
+            else:
+                vv.append(v[k])
+        return np.argmax(vv)
+
+
+class Logs:
+    def __init__(self):
+        self.logs: list = []
+        self.hp_names = None
+        self.filenames: list = []
+
+    def _add(self, log: Log):
+        self.hp_names = {k: True for k in log.hps}
+        for l in self.logs:
+            for k in log.hps:
+                if k not in l.hps:
+                    l.hps[k] = "none"
+
+        self.logs.append(log)
+
+    def add(self, logs: Log | Iterable[Log] | Self):
+        if isinstance(logs, Log):
+            self._add(logs)
+        else:
+            for l in logs:
+                self._add(l)
+
+    def max(self, function):
+        alls = [function(log) for log in self.logs]
+        idx = np.argmax(alls)
+        return self.logs[idx]
+
+    def columns(self):
+        return list(self.logs[0].values)
+
+    def hps(self):
+        return list(self.hp_names)
+
+    def size(self):
+        return len(self.logs)
+
+    def filter(self, hp_name, test_fn):
+        logs = Logs()
+        if not callable(test_fn):
+            for l in self.logs:
+                h = l.hps[hp_name]
+                if h == test_fn:
+                    logs.add(l)
+        else:
+            for l in self.logs:
+                if test_fn(l.hps[hp_name]):
+                    logs.add(l)
+        return logs
+
+    def unique_hps(self, name: str):
+        r = {}
+        for l in self.logs:
+            v = l.hps[name]
+            r[v] = 1
+        return list(r.keys())
+
+    def __len__(self):
+        return len(self.logs)
+
+    def to_dataframe(self):
+        rdf = None
+        for log in tqdm(self.logs):
+            df = log.to_dataframe(with_hps=True)
+            if rdf is None:
+                rdf = [df]
+            else:
+                rdf.append(df)
+        return pd.concat(rdf)
+
+
+def flattify(d):
+    r = {}
+    for k, v in d.items():
+        if isinstance(v, dict):
+            rr = flattify(v)
+            rrr = {k + "/" + kk: rrr for kk, rrr in rr.items()}
+            r = {**r, **rrr}
+        elif isinstance(v, list):
+            r[k] = str(v)
+        else:
+            r[k] = v
+    return r
+
+
+def read_log(directory: str, use_bz2: bool = True, debug: bool = False):
+    # print("== Read ", directory)
+    # if os.path.exists(directory+"/fast.pickle"):
+    #     f=open(directory+"/fast.pickle","rb")
+    #     log=pickle.load(f)
+    #     f.close()
+    #     return log
+
+    f = None
+    if use_bz2:
+        picklename = directory + "/db.pickle.bzip2"
+        f = bz2.BZ2File(picklename, "rb")
+    else:
+        picklename = directory + "/db.pickle"
+        f = open(picklename, "rb")
+    values = {}
+
+    try:
+        while True:
+            a = pickle.load(f)
+            if a is not None:
+                for name, iteration, value in a:
+                    # print(name,iteration,value)
+                    if debug:
+                        print(name, value, type(value))
+                    if isinstance(value, np.int64):
+                        value = int(value)
+                    if (
+                        isinstance(value, int)
+                        or isinstance(value, float)
+                        or isinstance(value, str)
+                    ):
+                        if name not in values:
+                            values[name] = []
+                        while len(values[name]) < iteration + 1:
+                            values[name].append(None)
+                        values[name][iteration] = value
+    except:
+        f.close()
+    f = open(directory + "/params.pickle", "rb")
+    params = pickle.load(f)
+    params = eval(str(params))
+    params = flattify(params)
+    f.close()
+    log = Log(params, values)
+    log.from_directory = directory
+    # f=open(directory+"/fast.pickle","wb")
+    # pickle.dump(log,f)
+    # f.close()
+
+    return log
+
+
+def get_directories(directory: str, use_bz2: bool = True):
+    import os.path
+
+    name = "db.pickle"
+    if use_bz2:
+        name = "db.pickle.bzip2"
+
+    return [
+        dir_path
+        for dir_path, dir_names, filenames in os.walk(directory)
+        if name in filenames
+    ]
+
+
+def read_directories(directories, use_bz2=True):
+    l = Logs()
+    for dirpath in directories:
+        log = read_log(dirpath, use_bz2)
+        l.add(log)
+    print("Found %d logs" % l.size())
+    return l
+
+
+def read_directory(directory, use_bz2=True):
+    import os.path
+
+    l = Logs()
+    name = "db.pickle"
+    if use_bz2:
+        name = "db.pickle.bzip2"
+    for dir_path, dir_names, filenames in os.walk(directory):
+        if name in filenames:
+            log = read_log(dir_path, use_bz2)
+            l.add(log)
+    print("Found %d logs" % l.size())
+    return l
+
+
+def _create_col(df, hps, _name):
+    vs = []
+    for k, v in df.groupby(hps):
+        n = {hps[i]: k[i] for i in range(len(hps))}
+        v = v.copy()
+        name = ",".join([str(k) + "=" + str(n[k]) for k in n])
+        print(name)
+        print(_name)
+        v[_name] = name
+        vs.append(v)
+    return pd.concat(vs)
+
+
+def plot_dataframe(
+    df, y, x="iteration", hue=None, style=None, row=None, col=None, kind="line"
+):
+    """
+    Plot a dataframe using seaborn
+    """
+
+    try:
+        import seaborn as sns
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError("Seaborn is required for plotting")
+
+    cols = [y, x]
+    if isinstance(row, list):
+        cols += row
+    else:
+        cols += [row]
+    if isinstance(col, list):
+        cols += col
+    else:
+        cols += [col]
+    if isinstance(style, list):
+        cols += style
+    else:
+        cols += [style]
+    if isinstance(hue, list):
+        cols += hue
+    else:
+        cols += [hue]
+    cols = [c for c in cols if c is not None]
+    df = df[cols].dropna()
+
+    if isinstance(row, list):
+        df = _create_col(df, row, "__row")
+        row = "__row"
+    if isinstance(col, list):
+        df = _create_col(df, col, "__col")
+        col = "__col"
+    if isinstance(style, list):
+        df = _create_col(df, style, "__style")
+        style = "__style"
+    if isinstance(hue, list):
+        df = _create_col(df, hue, "__hue")
+        hue = "__hue"
+
+    sns.relplot(x=x, y=y, hue=hue, style=style, row=row, col=col, data=df, kind=kind)
+
+----!@#$----
+sabblium\workspace.py
+#  SaBBLium ― A Python library for building and simulating multi-agent systems.
+#
+#  Copyright © Facebook, Inc. and its affiliates.
+#  Copyright © Sorbonne University.
+#
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+#
+
+from __future__ import annotations
+
+from typing import Generator, Iterable
+
+import numpy as np
+import torch
+from torch import Tensor
+
+from ._tensors import (
+    CompactTemporalTensor,
+    SlicedTemporalTensor,
+    TemporalTensor,
+)
+
+""" This module provides different ways to store tensors that are more flexible than the torch.Tensor class
+It also defines the `Workspace` as a dictionary of tensors.
+"""
+
+
+class Workspace:
+    """
+    Workspace is the most important class in `SaBBLium`.
+    It corresponds to a collection of WorkspaceTensors.:
+
+    In the most cases, we consider that all the tensors have the same time and batch sizes
+    (but it is not mandatory for most of the functions)
+    """
+
+    def __init__(self, workspace: Workspace | None = None):
+        """
+        Create an empty workspace
+
+        Args:
+            workspace (Workspace, optional): If specified, it creates a copy of the workspace (where tensors are cloned as CompactTemporalTensors)
+        """
+        self.variables: dict[str, TemporalTensor] = {}
+        if workspace is not None:
+            for k in workspace.keys():
+                self.set_full(k, workspace[k].clone())
+
+    def __len__(self):
+        return len(self.variables)
+
+    @staticmethod
+    def take_per_row_strided(
+        tensor: Tensor, index: Tensor, num_elem: int = 2
+    ) -> Tensor:
+        # TODO: Optimize this function
+        assert index.dtype in [torch.short, torch.int, torch.long]
+        arange = torch.arange(tensor.size()[1], device=tensor.device)
+        return torch.cat(
+            [tensor[index + t, arange].unsqueeze(0) for t in range(num_elem)],
+            dim=0,
+        )
+
+    def set(
+        self,
+        var_name: str,
+        t: int,
+        v: Tensor,
+        batch_dims: tuple[int, int] | None = None,
+    ):
+        """Set the variable var_name at time t"""
+        if var_name not in self.variables:
+            self.variables[var_name] = SlicedTemporalTensor()
+        elif isinstance(self.variables[var_name], TemporalTensor):
+            self.variables[var_name] = self.variables[var_name].to_sliced()
+        else:
+            raise NotImplementedError(
+                "Cannot set a variable at time {} that is not a TemporalTensor".format(
+                    t
+                )
+            )
+        self.variables[var_name].set(t=t, value=v, batch_dims=batch_dims)
+
+    def get(
+        self,
+        var_name: str,
+        t: int,
+        batch_dims: tuple[int, int] | None = None,
+    ) -> Tensor:
+        """Get the variable var_name at time t"""
+        assert var_name in self.variables, "Unknown variable '" + var_name + "'"
+        return self.variables[var_name].get(t, batch_dims=batch_dims)
+
+    def clear(self, name: str | None = None):
+        """Remove all the variables from the workspace"""
+        if name is None:
+            for k, v in self.variables.items():
+                v.clear()
+            self.variables = {}
+        else:
+            self.variables[name].clear()
+            del self.variables[name]
+
+    def contiguous(self) -> Workspace:
+        """Generates a workspace where all tensors are stored in the Compact format."""
+        workspace = Workspace()
+        for k in self.keys():
+            workspace.set_full(var_name=k, value=self.get_full(k))
+        return workspace
+
+    def set_full(
+        self,
+        var_name: str,
+        value: Tensor,
+        batch_dims: tuple[int, int] | None = None,
+    ):
+        """
+        Set variable var_name with a complete tensor of size (T × B × …)
+        T is the time dimension and B is the batch size.
+        """
+        if var_name not in self.variables:
+            self.variables[var_name] = CompactTemporalTensor()
+        self.variables[var_name].set_full(value=value, batch_dims=batch_dims)
+
+    def get_full(
+        self, var_name: str, batch_dims: tuple[int, int] | None = None
+    ) -> Tensor:
+        """Return the complete tensor for var_name"""
+        assert var_name in self.variables, (
+            "[Workspace.get_full] unknown variable '" + var_name + "'"
+        )
+        return self.variables[var_name].get_full(batch_dims=batch_dims)
+
+    def keys(self):
+        """Return an iterator over the variables names"""
+        return self.variables.keys()
+
+    def __getitem__(self, key: str | Iterable[str]) -> Tensor | Generator[Tensor]:
+        """
+        If key is a string, then it returns a `torch.Tensor`.
+        If key is a list or tuple of string, it returns a tuple of `torch.Tensor`.
+        """
+        if isinstance(key, str):
+            return self.get_full(key)
+        elif isinstance(key, Iterable):
+            return (self.get_full(k) for k in key)
+        else:
+            raise ValueError("Invalid key type")
+
+    def _all_variables_same_time_size(self) -> bool:
+        """Check that all variables have the same time size"""
+        _ts = None
+        for k, v in self.variables.items():
+            if _ts is None:
+                _ts = v.time_size()
+            if _ts != v.time_size():
+                return False
+        return True
+
+    def time_size(self) -> int:
+        """Return the time size of the variables in the workspace"""
+        _ts = None
+        for k, v in self.variables.items():
+            if _ts is None:
+                _ts = v.time_size()
+            assert _ts == v.time_size(), "Variables must have the same time size"
+        return _ts
+
+    def batch_size(self) -> int:
+        """Return the batch size of the variables in the workspace"""
+        _bs = None
+        for k, v in self.variables.items():
+            if _bs is None:
+                _bs = v.batch_size()
+            assert _bs == v.batch_size(), "Variables must have the same batch size"
+        return _bs
+
+    def select_batch(self, batch_indexes: Tensor) -> Workspace:
+        """Given a tensor of indexes, it returns a new workspace with the select elements (over the batch dimension)"""
+        _bs = None
+        for k, v in self.variables.items():
+            if _bs is None:
+                _bs = v.batch_size()
+            assert _bs == v.batch_size(), "Variables must have the same batch size"
+
+        workspace = Workspace()
+        for k, v in self.variables.items():
+            workspace.variables[k] = v.select_batch(batch_indexes)
+        return workspace
+
+    def select_batch_n(self, n: int):
+        """Return a new Workspace of batch_size n by randomly sampling over the batch dimension"""
+        who = torch.randint(low=0, high=self.batch_size(), size=(n,))
+        return self.select_batch(who)
+
+    def copy_time(
+        self,
+        from_time: int,
+        to_time: int,
+        n_steps: int,
+        var_names: list[str] | None = None,
+    ):
+        """
+        Copy all the variables values from time `from_time` to `from_time+n_steps` to `to_time` to `to_time+n_steps`.
+        Eventually restricted to specific variables using `var_names`.
+        """
+        for k, v in self.variables.items():
+            if var_names is None or k in var_names:
+                v.copy_time(from_time, to_time, n_steps)
+
+    def get_time_truncated(
+        self,
+        var_name: str,
+        from_time: int,
+        to_time: int,
+        batch_dims: tuple[int, int] | None = None,
+    ) -> Tensor:
+        """Return workspace[var_name][from_time:to_time]"""
+        assert 0 <= from_time < to_time and to_time >= 0
+
+        v = self.variables[var_name]
+        if isinstance(v, SlicedTemporalTensor):
+            return v.get_time_truncated(from_time, to_time, batch_dims)
+        else:
+            return v.get_full(batch_dims)[from_time:to_time]
+
+    def get_time_truncated_workspace(self, from_time: int, to_time: int) -> Workspace:
+        """Return a workspace with all variables truncated between from_time and to_time"""
+        workspace = Workspace()
+        for k in self.keys():
+            workspace.set_full(k, self.get_time_truncated(k, from_time, to_time))
+        return workspace
+
+    @staticmethod
+    def cat_batch(workspaces: list[Workspace]) -> Workspace:
+        """
+        Concatenate multiple workspaces over the batch dimension.
+        The workspaces must have the same time dimension.
+        """
+
+        ts = None
+        for w in workspaces:
+            if ts is None:
+                ts = w.time_size()
+            assert ts == w.time_size(), "Workspaces must have the same time_size"
+
+        workspace = Workspace()
+        for k in workspaces[0].keys():
+            vals = [w[k] for w in workspaces]
+            v = torch.cat(vals, dim=1)
+            workspace.set_full(k, v)
+        return workspace
+
+    def copy_n_last_steps(self, n: int, var_names: list[str] | None = None):
+        """Copy the n last timesteps of each variable to the n first timesteps."""
+        _ts = None
+        for k, v in self.variables.items():
+            if var_names is None or k in var_names:
+                if _ts is None:
+                    _ts = v.time_size()
+                assert _ts == v.time_size(), "Variables must have the same time size"
+
+        for k, v in self.variables.items():
+            if var_names is None or k in var_names:
+                self.copy_time(_ts - n, 0, n)
+
+    def zero_grad(self) -> None:
+        """Remove any gradient information"""
+        for k, v in self.variables.items():
+            v.zero_grad()
+
+    def to(self, device: torch.device) -> Workspace:
+        """Return a workspace where all tensors are on a particular device"""
+        workspace = Workspace()
+        for k, v in self.variables.items():
+            workspace.variables[k] = v.to(device)
+        return workspace
+
+    def subtime(self, from_t: int, to_t: int) -> Workspace:
+        """
+        Return a workspace restricted to a subset of the time dimension
+        """
+        assert (
+            self._all_variables_same_time_size()
+        ), "All variables must have the same time size"
+        workspace = Workspace()
+        for k, v in self.variables.items():
+            workspace.variables[k] = v.subtime(from_t, to_t)
+        return workspace
+
+    def remove_variable(self, var_name: str):
+        """Remove a variable from the Workspace"""
+        del self.variables[var_name]
+
+    def __str__(self):
+        r = ["Workspace:"]
+        for k, v in self.variables.items():
+            r.append(
+                "\t"
+                + k
+                + ": time_size = "
+                + str(v.time_size())
+                + ", batch_size = "
+                + str(v.batch_size())
+                + ", shape = "
+                + str(tuple(v.tensor_size()))
+            )
+        return "\n".join(r)
+
+    def select_subtime(self, t: torch.LongTensor, window_size: int) -> Workspace:
+        """
+        `t` is a tensor of size `batch_size` that provides one time index for each element of the workspace.
+        Then the function returns a new workspace by aggregating `window_size` timesteps starting from index `t`
+        This method allows to sample multiple windows in the Workspace.
+        Note that the function may be quite slow.
+
+        Args:
+             t ([torch.Tensor]): a batch_size tensor of int time positions
+             window_size ([type]): the output time size
+        """
+
+        assert t.dtype in [torch.short, torch.int, torch.long]
+        _vars = {k: v.get_full(batch_dims=None) for k, v in self.variables.items()}
+        workspace = Workspace()
+        for k, v in _vars.items():
+            workspace.set_full(
+                var_name=k,
+                value=self.take_per_row_strided(
+                    tensor=v, index=t, num_elem=window_size
+                ),
+            )
+        return workspace
+
+    def sample_subworkspace(
+        self, n_times: int, n_batch_elements: int, n_timesteps: int
+    ) -> Workspace:
+        """
+        Sample a workspace from the  workspace. The process is the following:
+                * Let us consider that workspace batch_size is B and time_size is T
+                * For n_times iterations:
+                    * We sample a time window of size n_timesteps
+                    * We then sample a n_batch_elements elements on the batch size
+                    * =>> we obtain a workspace of size n_batch_elements x n_timesteps
+                * We concatenate all the workspaces collected (over the batch dimension)
+
+        Args:
+            n_times ([int]): The number of sub workspaces to sample (and concatenate)
+            n_batch_elements ([int]): <=workspace.batch_size() : the number of batch elements to sample for each sub workspace
+            n_timesteps ([int]): <=workspace.time_size() : the number of timesteps to keep
+
+        Returns:
+            [Workspace]: The resulting workspace
+        """
+        batch_size: int = self.batch_size()
+        time_size: int = self.time_size()
+        to_aggregate: list[Workspace] = []
+        for _ in range(n_times):
+            assert not n_timesteps > time_size
+            mini_workspace: Workspace = self
+            if n_timesteps < time_size:
+                t = np.random.randint(time_size - n_timesteps)
+                mini_workspace = self.subtime(t, t + n_timesteps)
+
+            # Batch sampling
+            if n_batch_elements < batch_size:
+                idx_envs = torch.randperm(batch_size)[:n_batch_elements]
+                mini_workspace = mini_workspace.select_batch(idx_envs)
+            to_aggregate.append(mini_workspace)
+
+        if len(to_aggregate) > 1:
+            mini_workspace = Workspace.cat_batch(to_aggregate)
+        else:
+            mini_workspace = to_aggregate[0]
+        return mini_workspace
+
+    def get_transitions(self, filter_key: str) -> Workspace:
+        """Return a new workspace containing the transitions of the current workspace.
+            Each key of the current workspace have dimensions [n_step, n_env, key_dim]
+            {
+                Key1 :
+                    [
+                        [step1, step1, step1], # for env 1,2,3 ...
+                        [step2, step2, step2], # for env 1,2,3 ...
+                        ...
+                    ]
+                ...
+
+            }
+
+            Return a workspace of transitions with the following structure :
+            Each key of the returned workspace have dimensions [2, n_transitions, key_dim]
+            key[0][0], key[1][0] = (step_1, step_2) # for env 1
+            key[0][1], key[1][1] = (step_1, step_2) # for env 2
+            key[0][2], key[1][2] = (step_2, step_3) # for env 1
+            key[0][3], key[1][3] = (step_2, step_3) # for env 2
+            ...
+
+            Filters every transitions [step_final, step_initial]
+
+        Returns:
+            [Workspace]: The resulting workspace of transitions
+        """
+
+        transitions = {}
+        stopped = self[filter_key][:-1]
+        for key in self.keys():
+            array = self[key]
+
+            # remove transitions (s_terminal -> s_initial)
+            x = array[:-1][~stopped]
+            x_next = array[1:][~stopped]
+            transitions[key] = torch.stack([x, x_next])
+
+        workspace = Workspace()
+        for k, v in transitions.items():
+            workspace.set_full(k, v)
+        return workspace
+
+----!@#$----
+sabblium\_tensors.py
+#  SaBBLium ― A Python library for building and simulating multi-agent systems.
+#
+#  Copyright © Facebook, Inc. and its affiliates.
+#  Copyright © Sorbonne University.
+#
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+#
+
+from abc import ABC
+from typing import Self
+
+import torch
+from torch import Tensor
+
+
+class TemporalTensor(ABC):
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.size: torch.Size | None = None
+        self.device: torch.device | None = None
+        self.dtype: torch.dtype | None = None
+
+    def clear(self) -> None:
+        self.size = None
+        self.device = None
+        self.dtype = None
+
+    def zero_grad(self) -> None:
+        raise NotImplementedError("zero_grad is not implemented")
+
+    def time_size(self) -> int:
+        raise NotImplementedError("time_size is not implemented")
+
+    def batch_size(self) -> int:
+        raise NotImplementedError("batch_size is not implemented")
+
+    def tensor_size(self) -> torch.Size:
+        raise NotImplementedError("tensor_size is not implemented")
+
+    def get(self, t: int, batch_dims: tuple[int, int] | None) -> Tensor:
+        raise NotImplementedError("get is not implemented")
+
+    def get_full(self, batch_dims: tuple[int, int] | None) -> Tensor:
+        raise NotImplementedError("get_full is not implemented")
+
+    def set(self, t: int, value: Tensor, batch_dims: tuple[int, int] | None) -> None:
+        raise NotImplementedError("set is not implemented")
+
+    def set_full(self, value: Tensor, batch_dims: tuple[int, int] | None) -> None:
+        raise NotImplementedError("set_full is not implemented")
+
+    def select_batch(self, batch_indexes: Tensor) -> Self:
+        raise NotImplementedError("select_batch is not implemented")
+
+    def to_sliced(self) -> Self:
+        if isinstance(self, SlicedTemporalTensor):
+            return self
+        else:
+            raise NotImplementedError("to_sliced is not implemented")
+
+    def copy_time(self, from_time: int, to_time: int, n_steps: int) -> None:
+        raise NotImplementedError("copy_time is not implemented")
+
+    def subtime(self, from_t: int, to_t: int):
+        raise NotImplementedError("subtime is not implemented")
+
+    def to(self, device: torch.device) -> Self:
+        raise NotImplementedError("to is not implemented")
+
+
+class SlicedTemporalTensor(TemporalTensor):
+    """A `SlicedTemporalTensor` represents a tensor of size (T × B × …) by using a list of tensors of size (B × …)
+    The interest is that this tensor automatically adapts its timestep dimension
+    and does not need to have a predefined size.
+    """
+
+    def __init__(self, **kwargs) -> None:
+        """Initialize an empty tensor"""
+        super().__init__(**kwargs)
+        self.tensors: list[Tensor] = []
+        self.size: torch.Size | None = None
+        self.device: torch.device | None = None
+        self.dtype: torch.dtype | None = None
+
+    def set(
+        self,
+        t: int,
+        value: Tensor,
+        batch_dims: tuple[int, int] | None,
+    ) -> None:
+        """Set a value of size (B × …) at time t"""
+        if batch_dims is not None:
+            raise TypeError("Unable to use batch dimensions with SlicedTemporalTensor")
+
+        if self.size is None:
+            self.size = value.size()
+            self.device = value.device
+            self.dtype = value.dtype
+        assert self.size == value.size(), "Incompatible size"
+        assert self.device == value.device, "Incompatible device"
+        assert self.dtype == value.dtype, "Incompatible type"
+        while len(self.tensors) <= t:
+            self.tensors.append(
+                torch.zeros(*self.size, device=self.device, dtype=self.dtype)
+            )
+        self.tensors[t] = value
+
+    def to(self, device: torch.device) -> Self:
+        """Move the tensor to a specific device"""
+        s: Self = SlicedTemporalTensor()
+        for k in range(len(self.tensors)):
+            s.set(k, self.tensors[k].to(device), batch_dims=None)
+        return s
+
+    def get(self, t: int, batch_dims: tuple[int, int] | None) -> Tensor:
+        """Get the value of the tensor at time t"""
+
+        assert (
+            batch_dims is None
+        ), "Unable to use batch dimensions with SlicedTemporalTensor"
+        assert t < len(self.tensors), "Temporal index out of bounds"
+        return self.tensors[t]
+
+    def get_full(self, batch_dims) -> Tensor:
+        """Returns the complete tensor of size (T × B × …)"""
+
+        assert (
+            batch_dims is None
+        ), "Unable to use batch dimensions with SlicedTemporalTensor"
+        return torch.cat([a.unsqueeze(0) for a in self.tensors], dim=0)
+
+    def get_time_truncated(
+        self, from_time: int, to_time: int, batch_dims: tuple[int, int] | None
+    ) -> Tensor:
+        """Returns tensor[from_time:to_time]"""
+        assert 0 <= from_time < to_time and to_time >= 0
+        assert batch_dims is None
+        return torch.cat(
+            [
+                self.tensors[k].unsqueeze(0)
+                for k in range(from_time, min(len(self.tensors), to_time))
+            ],
+            dim=0,
+        )
+
+    def set_full(self, value: Tensor, batch_dims: tuple[int, int] | None) -> None:
+        """Set the tensor given a (T × B × …) value tensor.
+        The input tensor is cut into slices that are stored in a list of tensors
+        """
+        assert (
+            batch_dims is None
+        ), "Unable to use batch dimensions with SlicedTemporalTensor"
+        for t in range(value.size()[0]):
+            self.set(t, value[t], batch_dims=batch_dims)
+
+    def time_size(self) -> int:
+        """
+        Return the size of the time dimension
+        """
+        return len(self.tensors)
+
+    def batch_size(self) -> int:
+        """Return the size of the batch dimension"""
+        return self.tensors[0].size()[0]
+
+    def tensor_size(self) -> torch.Size:
+        """Return the size of the tensor"""
+        return self.tensors[0].size()[1:]
+
+    def select_batch(self, batch_indexes: Tensor) -> Self:
+        """Return the tensor where the batch dimension has been selected by the index"""
+        assert batch_indexes.dtype in (torch.short, torch.int, torch.long)
+        var = SlicedTemporalTensor()
+        for t, v in enumerate(self.tensors):
+            batch_indexes = batch_indexes.to(v.device)
+            var.set(t, v[batch_indexes], None)
+        return var
+
+    def clear(self):
+        """Clear the tensor"""
+        super().clear()
+        self.tensors = []
+
+    def copy_time(self, from_time: int, to_time: int, n_steps: int):
+        """Copy temporal slices of the tensor from from_time:from_time+n_steps to to_time:to_time+n_steps"""
+        for t in range(n_steps):
+            v = self.get(from_time + t, batch_dims=None)
+            self.set(to_time + t, v, batch_dims=None)
+
+    def subtime(self, from_t: int, to_t: int) -> Self:
+        """
+        Return tensor[from_t:to_t]
+
+        """
+        return CompactTemporalTensor(
+            value=torch.cat([a.unsqueeze(0) for a in self.tensors[from_t:to_t]], dim=0),
+        )
+
+    def zero_grad(self) -> None:
+        """Clear any gradient information in the tensor"""
+        self.tensors = [v.detach() for v in self.tensors]
+
+
+class CompactTemporalTensor(TemporalTensor):
+    """
+    A `CompactTemporalTensor` is a tensor of size (T × B × …)
+    It behaves like the `SlicedTemporalTensor` but has a fixed size that cannot change.
+    It is faster than the `SlicedTemporalTensor`.
+    """
+
+    def __init__(self, value: Tensor | None = None, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self.size = None
+        self.device = None
+        self.dtype = None
+        self.tensor = None
+        if value is not None:
+            self.tensor = value
+            self.device = value.device
+            self.size = value.size()
+            self.dtype = value.dtype
+
+    def set(self, t, value, batch_dims) -> SlicedTemporalTensor:
+        raise NotImplementedError("Cannot set a value in a CompactTemporalTensor")
+
+    def select_batch(self, batch_indexes: Tensor) -> Self:
+        assert batch_indexes.dtype in (torch.short, torch.int, torch.long)
+        return CompactTemporalTensor(value=self.tensor[:, batch_indexes])
+
+    def to_sliced(self) -> SlicedTemporalTensor:
+        """Transform the tensor to a `SlicedTemporalTensor`"""
+        v = SlicedTemporalTensor()
+        for t in range(self.tensor.size()[0]):
+            v.set(t, self.tensor[t], None)
+        return v
+
+    def to(self, device: torch.device) -> Self:
+        if device == self.tensor.device:
+            return self
+        return CompactTemporalTensor(value=self.tensor.to(device))
+
+    def get(self, t: int, batch_dims: tuple[int, int] | None) -> Tensor:
+        assert t < self.tensor.size()[0], "Temporal index out of bounds"
+        if batch_dims is None:
+            return self.tensor[t]
+        else:
+            return self.tensor[t, batch_dims[0] : batch_dims[1]]
+
+    def get_full(self, batch_dims: tuple[int, int] | None) -> Tensor:
+        if batch_dims is None:
+            return self.tensor
+        else:
+            return self.tensor[:, batch_dims[0] : batch_dims[1]]
+
+    def time_size(self) -> int:
+        return self.tensor.size()[0]
+
+    def batch_size(self) -> int:
+        return self.tensor.size()[1]
+
+    def tensor_size(self) -> torch.Size:
+        return self.tensor.size()[2:]
+
+    def set_full(self, value: Tensor | None, batch_dims: tuple[int, int] | None):
+        if self.tensor is None:
+            if batch_dims is None:
+                self.size = value.size()
+                self.dtype = value.dtype
+                self.device = value.device
+            else:
+                raise TypeError("Cannot set an empty tensor with batch_dims")
+
+        if batch_dims is None:
+            if value is not None:
+                self.tensor = value
+            else:
+                raise TypeError("Value is None but batch_dims is not")
+        else:
+            self.tensor[:, batch_dims[0] : batch_dims[1]] = value
+
+    def subtime(self, from_t: int, to_t: int):
+        return CompactTemporalTensor(value=self.tensor[from_t:to_t])
+
+    def clear(self):
+        super().clear()
+        self.tensor = None
+
+    def copy_time(self, from_time: int, to_time: int, n_steps: int):
+        self.tensor[to_time : to_time + n_steps] = self.tensor[
+            from_time : from_time + n_steps
+        ]
+
+    def zero_grad(self):
+        self.tensor = self.tensor.detach()
+
+----!@#$----
+sabblium\__init__.py
+#  SaBBLium ― A Python library for building and simulating multi-agent systems.
+#
+#  Copyright © Facebook, Inc. and its affiliates.
+#  Copyright © Sorbonne University.
+#
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+#
+
+from .agent import Agent, TimeAgent, SerializableAgent
+from .agents.seeding import SeedableAgent
+from .workspace import Workspace
+
+trace_workspace = False
+trace = []
+trace_maximum_size = 10000
+
+
+def instantiate_class(arguments):
+    from importlib import import_module
+
+    d = dict(arguments)
+    classname = d["classname"]
+    del d["classname"]
+    module_path, class_name = classname.rsplit(".", 1)
+    module = import_module(module_path)
+    c = getattr(module, class_name)
+    return c(**d)
+
+
+def get_class(arguments):
+    from importlib import import_module
+
+    if isinstance(arguments, dict):
+        classname = arguments["classname"]
+        module_path, class_name = classname.rsplit(".", 1)
+        module = import_module(module_path)
+        c = getattr(module, class_name)
+        return c
+    else:
+        classname = arguments.classname
+        module_path, class_name = classname.rsplit(".", 1)
+        module = import_module(module_path)
+        c = getattr(module, class_name)
+        return c
+
+
+def get_arguments(arguments):
+    d = dict(arguments)
+    if "classname" in d:
+        del d["classname"]
+    return d
+
+----!@#$----
+sabblium\agents\dataloader.py
+#  SaBBLium ― A Python library for building and simulating multi-agent systems.
+#
+#  Copyright © Facebook, Inc. and its affiliates.
+#  Copyright © Sorbonne University.
+#
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+#
+
+import torch
+from torch import Tensor
+from torch.utils import data
+
+from sabblium import Agent, SeedableAgent
+
+
+class ShuffledDatasetAgent(Agent, SeedableAgent):
+    """An agent that read a dataset infinitely in a shuffle order."""
+
+    def __init__(
+        self,
+        dataset: data.Dataset,
+        batch_size: int,
+        output_names: tuple[str, str] = ("x", "y"),
+        **kwargs,
+    ):
+        """Create the agent
+        Args:
+            dataset ([torch.utils.data.Dataset]): the Dataset
+            batch_size ([int]): The number of datapoints to write at each call
+            output_names (tuple): The name of the variables. Default to ("x", "y").
+        """
+        super().__init__(**kwargs)
+        self.output_names = output_names
+        self.dataset: data.Dataset = dataset
+        self.batch_size: int = batch_size
+        self.ghost_params = torch.nn.Parameter(torch.randn(()))
+
+    def forward(self, **kwargs):
+        """Write a batch of data at timestep==0 in the workspace"""
+        # TODO: use torch sampler
+        vs = []
+        for k in range(self.batch_size):
+            idx = self.np_random.integers(len(self.dataset))
+            x = self.dataset[idx]
+            xs = []
+            for xx in x:
+                if isinstance(xx, Tensor):
+                    xs.append(xx.unsqueeze(0))
+                else:
+                    xs.append(torch.tensor(xx).unsqueeze(0))
+            vs.append(xs)
+
+        vals = [torch.cat([v[k] for v in vs], dim=0) for k in range(len(vs[0]))]
+
+        for name, value in zip(self.output_names, vals):
+            self.set((name, 0), value.to(self.ghost_params.device))
+
+
+class DataLoaderAgent(Agent):
+    """An agent based on a DataLoader that read a single dataset
+    Usage is: agent.forward(), then one has to check if agent.finished() is True or Not.
+    If True, then no data have been written in the workspace since the reading of the dataset is terminated
+    """
+
+    def __init__(
+        self,
+        dataloader: data.dataloader,
+        output_names: tuple[str, str] = ("x", "y"),
+        **kwargs,
+    ):
+        """Create the agent based on a dataloader
+        Args:
+            dataloader ([DataLoader]): The underlying pytorch dataloader object
+            output_names (tuple, optional): Names of the variable to write in the workspace. Defaults to ("x", "y").
+        """
+        super().__init__(**kwargs)
+        self.dataloader: data.dataloader = dataloader
+        self.iter = iter(self.dataloader)
+        self.output_names: tuple[str, str] = output_names
+        self._finished: bool = False
+        self.ghost_params = torch.nn.Parameter(torch.randn(()))
+
+    def reset(self):
+        self.iter = iter(self.dataloader)
+        self._finished = False
+
+    def finished(self):
+        return self._finished
+
+    def forward(self, **kwargs):
+        super().forward(**kwargs)
+        try:
+            output_values = next(self.iter)
+        except StopIteration:
+            self.iter = None
+            self._finished = True
+        else:
+            for name, value in zip(self.output_names, output_values):
+                self.set((name, 0), value.to(self.ghost_params.device))
+
+----!@#$----
+sabblium\agents\README.md
+# sabblium.agents
+
+We propose a list of agents to reuse (see Documentation in the code)
+
+## utils
+
+* `Agents`: Execute multiple agents sequentially
+* `TemporalAgent`: Execute one agent over multiple timesteps
+* `CopyAgent`: An agent to create copies of variables
+* `PrintAgent`: An agent that print variables
+
+## envs
+
+* `GymAgent`: An agent based on a gymnasium environment
+
+## dataloader
+
+* `ShuffledDatasetAgent`: An agent to read random batches in a torch.utils.data.Dataset
+* `DataLoaderAgent`: An agent to do one pass over a complete dataset (based on a DataLoader)
+
+----!@#$----
+sabblium\agents\seeding.py
+#  SaBBLium ― A Python library for building and simulating multi-agent systems.
+#
+#  Copyright © Facebook, Inc. and its affiliates.
+#  Copyright © Sorbonne University.
+#
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+#
+
+from abc import ABC
+
+from sabblium import Agent
+
+
+class SeedableAgent(Agent, ABC):
+    """
+    `SeedableAgent` is used as a convention to represent agents that can be seeded.
+    """
+
+    def __init__(self, seed: int | None = None, **kwargs):
+        super().__init__(**kwargs)
+        self._seed = seed
+
+----!@#$----
+sabblium\agents\utils.py
+#  SaBBLium ― A Python library for building and simulating multi-agent systems.
+#
+#  Copyright © Facebook, Inc. and its affiliates.
+#  Copyright © Sorbonne University.
+#
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+#
+
+import copy
+from typing import Any, Iterable
+
+import torch
+import torch.nn as nn
+from torch import Tensor
+
+from sabblium import Agent, TimeAgent, SerializableAgent
+from sabblium.agents.seeding import SeedableAgent
+from sabblium.workspace import Workspace
+
+
+class Agents(SeedableAgent, SerializableAgent):
+    """An agent that contains multiple agents executed
+
+    Warnings:
+        * the agents are executed in the order they are added to the agent if no seed is provided
+        * the agents are serialized only if they inherit from `SerializableAgent`
+
+    Args:
+        Agent ([sabblium.Agent]): The agents
+    """
+
+    def __init__(
+        self,
+        *agents: [Iterable[Agent] | None],
+        **kwargs,
+    ):
+        """Creates the agent from multiple agents
+
+        Args:
+            name ([str], optional): [name of the resulting agent]. Default to None.
+        """
+        super().__init__(**kwargs)
+        for a in agents:
+            assert isinstance(a, Agent)
+        self.agents: nn.ModuleList[Agent] = nn.ModuleList(agents)
+
+    def __getitem__(self, k: int) -> Agent:
+        return self.agents[k]
+
+    def __call__(self, workspace: Workspace, **kwargs) -> list[Any]:
+        # TODO: call depends on the seed
+        return [a(workspace, **kwargs) for a in self.agents]
+
+    def forward(self, **kwargs) -> list[Any]:
+        pass
+
+    def get_by_name(self, name: str) -> list[Agent]:
+        r = []
+        for a in self.agents:
+            r += a.get_by_name(name)
+        if name == self._name:
+            r += [self]
+        return r
+
+    def serialize(self):
+        """Serialize the agents
+        Warning: the agents are serialized only if they inherit from `SerializableAgent`
+        """
+        serializable_agents = [
+            (
+                a.serialize()
+                if isinstance(a, SerializableAgent)
+                else (a.__class__.__name__, a.get_name())
+            )
+            for a in self.agents
+        ]
+        return Agents(*serializable_agents, name=self._name, seed=self._seed)
+
+
+class CopyTemporalAgent(SerializableAgent):
+    """An agent that copies a variable
+
+    Args:
+        input_name ([str]): The variable to copy from
+        output_name ([str]): The variable to copy to
+        detach ([bool]): copy with detach if True
+    """
+
+    def __init__(
+        self,
+        input_name: str,
+        output_name: str,
+        detach: bool = False,
+        name: str | None = None,
+    ):
+        super().__init__(name=name)
+        self.input_name: str = input_name
+        self.output_name: str = output_name
+        self.detach: bool = detach
+
+    def forward(self, t: int | None = None, **kwargs):
+        """
+        Args:
+            t ([type], optional): if not None, copy at time t else whole tensor. Defaults to None.
+        """
+        if t is None:
+            x = self.get(self.input_name)
+            if not self.detach:
+                self.set(self.output_name, x)
+            else:
+                self.set(self.output_name, x.detach())
+        else:
+            x = self.get((self.input_name, t))
+            if not self.detach:
+                self.set((self.output_name, t), x)
+            else:
+                self.set((self.output_name, t), x.detach())
+
+
+class PrintAgent(SerializableAgent):
+    """An agent to generate print in the console (mainly for debugging)"""
+
+    def __init__(self, *names: Iterable[str | None] | None, **kwargs):
+        """
+        Args:
+            names ([str], optional): The variables to print
+        """
+        super().__init__(**kwargs)
+        self.names: Iterable[str | None] | None = names
+
+    def forward(self, t: int | None, **kwargs):
+        if self.names is None:
+            self.names = self.workspace.keys()
+        for n in self.names:
+            if n is not None:
+                if t is None:
+                    print(n, " = ", self.get(n))
+                else:
+                    print(n, " = ", self.get((n, t)))
+
+
+class TemporalAgent(TimeAgent, SerializableAgent):
+    """Execute one Agent over multiple timestamps"""
+
+    def __init__(self, agent: Agent, **kwargs):
+        """The agent to transform to a temporal agent
+
+        Args:
+            agent ([sabblium.Agent]): The agent to encapsulate
+            name ([str], optional): Name of the agent
+        """
+        super().__init__(**kwargs)
+        self.agent: Agent = agent
+
+    def __call__(
+        self,
+        workspace: Workspace,
+        t: int = 0,
+        n_steps: int | None = None,
+        stop_variable: str | None = None,
+        **kwargs,
+    ):
+        """Execute the agent starting at time t, for n_steps
+
+        Args:
+            workspace ([sabblium.Workspace]):
+            t (int, optional): The starting timestep. Defaults to 0.
+            n_steps ([type], optional): The number of steps. Defaults to None.
+            stop_variable ([type], optional): if True everywhere (at time t), execution is stopped. Defaults to None = not used.
+        """
+
+        assert not (n_steps is None and stop_variable is None)
+        _t = t
+        while True:
+            self.agent(workspace, t=_t, **kwargs)
+            if stop_variable is not None:
+                s: Tensor = workspace.get(stop_variable, _t)
+                if s.all():
+                    break
+            _t += 1
+            if n_steps is not None:
+                if _t >= t + n_steps:
+                    break
+
+    def forward(self, t: int, **kwargs) -> Any:
+        pass
+
+    def get_by_name(self, name: str) -> list[Agent]:
+        r = self.agent.get_by_name(name)
+        if name == self._name:
+            r += [self]
+        return r
+
+    def serialize(self):
+        """Can only serialize if the wrapped agent is serializable"""
+        if isinstance(self.agent, SerializableAgent):
+            return TemporalAgent(agent=self.agent.serialize(), name=self._name)
+        else:
+            temp = copy.deepcopy(self)
+            temp.agent = None
+            return temp
+
+
+class EpisodesStopped(TimeAgent, SerializableAgent):
+    """
+    If stopped is encountered at time t, then stopped=True for all timeteps t'>=t
+    It allows to simulate a single episode agent based on an autoreset agent
+    """
+
+    def __init__(
+        self, in_var: str = "env/stopped", out_var: str = "env/stopped", **kwargs
+    ):
+        super().__init__(**kwargs)
+        self.state: Tensor | None = None
+        self.in_var: str = in_var
+        self.out_var: str = out_var
+
+    def forward(self, t: int, **kwargs):
+        d: Tensor = self.get((self.in_var, t))
+        if t == 0:
+            self.state = torch.zeros_like(d).bool()
+        self.state = torch.logical_or(self.state, d)
+        self.set((self.out_var, t), self.state)
+
+----!@#$----
+sabblium\agents\__init__.py
+#  SaBBLium ― A Python library for building and simulating multi-agent systems.
+#
+#  Copyright © Facebook, Inc. and its affiliates.
+#  Copyright © Sorbonne University.
+#
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+#
+
+from .utils import Agents, CopyTemporalAgent, PrintAgent, TemporalAgent, EpisodesStopped
+
+----!@#$----
+sabblium\agents\envs\gyma.py
+#  SaBBLium ― A Python library for building and simulating multi-agent systems.
+#
+#  Copyright © Facebook, Inc. and its affiliates.
+#  Copyright © Sorbonne University.
+#
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+#
+
+import copy
+import warnings
+from abc import ABC
+from typing import (
+    Any,
+    Callable,
+)
+
+
+import torch
+from gymnasium import Env, Space
+from gymnasium.core import ActType, ObsType
+from gymnasium.experimental.wrappers.numpy_to_torch import NumpyToTorchV0
+from gymnasium.wrappers import AutoResetWrapper
+from torch import nn, Tensor
+
+from sabblium import SeedableAgent, SerializableAgent, TimeAgent
+
+Frame = dict[str, Tensor]
+
+
+def _torch_cat_dict(f: list[Frame]) -> Frame:
+    # Auxiliary function to copy tensors for a specific key
+    def copy_tensor(tensor_list: list[Frame], key: str):
+        # Determine the shape and data type of the resulting tensor
+        tensor_shape = (len(tensor_list),) + tuple(tensor_list[0][key].shape)
+        tensor_dtype = tensor_list[0][key].dtype
+
+        # Create an empty pre-allocated tensor with the appropriate shape and data type.
+        result_tensor = torch.empty(tensor_shape, dtype=tensor_dtype)
+
+        # Fill the pre-allocated tensor with the values from the input frames.
+        for i, frame in enumerate(tensor_list):
+            result_tensor[i].copy_(frame[key], non_blocking=True)
+
+        # Return the filled tensor
+        return result_tensor
+
+    # For each key in the input frames, call the copy_tensor function to create and fill the pre-allocated tensor
+    return {k: copy_tensor(f, k) for k in f[0]}
+
+
+class GymAgent(TimeAgent, SeedableAgent, SerializableAgent, ABC):
+    """Create an Agent from a gymnasium environment"""
+
+    def __init__(
+        self,
+        input_string: str = "action",
+        output_string: str = "env/",
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+
+        if self._seed is None:
+            warnings.warn("The GymAgent won't be deterministic")
+
+        self.ghost_params: nn.Parameter = nn.Parameter(torch.randn(()))
+
+        self.input: str = input_string
+        self.output: str = output_string
+        self._timestep_from_reset: int = 0
+        self._nb_reset: int = 0
+
+        self.observation_space: Space[ObsType] | None = None
+        self.action_space: Space[ActType] | None = None
+
+    def forward(self, t: int, **kwargs) -> None:
+        if t == 0:
+            self._timestep_from_reset = 0
+            self._nb_reset += 1
+        else:
+            self._timestep_from_reset += 0
+
+    def set_state(self, states: Frame, t: int) -> None:
+        for key, tensor in states.items():
+            self.set(
+                (self.output + key, t),
+                tensor.to(self.ghost_params.device),
+            )
+
+    def get_observation_space(self) -> Space[ObsType]:
+        """Return the observation space of the environment"""
+        if self.observation_space is None:
+            raise ValueError("The observation space is not defined")
+        return self.observation_space
+
+    def get_action_space(self) -> Space[ActType]:
+        """Return the action space of the environment"""
+        if self.action_space is None:
+            raise ValueError("The action space is not defined")
+        return self.action_space
+
+
+class SerialGymAgent(GymAgent):
+    """Create an Agent from a gymnasium environment
+    To create an auto-reset SerialGymAgent, use the gymnasium `AutoResetWrapper` in the make_env_fn
+    Warning: Make sure AutoResetWrapper is the outermost wrapper.
+    """
+
+    def __init__(
+        self,
+        make_env_fn: Callable[[dict[str, Any] | None], Env],
+        num_envs: int = 1,
+        make_env_args: dict[str, Any] | None = None,
+        **kwargs,
+    ):
+        """Create an agent from a Gymnasium environment
+
+        Args:
+            make_env_fn ([function that returns a gymnasium.Env]): The function to create a single gymnasium environments
+            num_envs ([int]): The number of environments to create, defaults to 1
+            make_env_args (dict): The arguments of the function that creates a gymnasium.Env
+            input_string (str, optional): [the name of the action variable in the workspace]. Defaults to "action".
+            output_string (str, optional): [the output prefix of the environment]. Defaults to "env/".
+        """
+        super().__init__(**kwargs)
+        if num_envs <= 0:
+            raise ValueError("The number of environments must be > 0")
+
+        self.make_env_fn: Callable[[dict[str, Any] | None], Env] = make_env_fn
+        self.num_envs: int = num_envs
+
+        self.envs: list[Env] = []
+        self._cumulated_reward: Tensor = torch.zeros(num_envs, dtype=torch.float32)
+        self._timestep: Tensor = torch.zeros(num_envs, dtype=torch.long)
+
+        self._is_autoreset: bool = False
+        self._last_frame: dict[int, Frame] = {}
+
+        args: dict[str, Any] = make_env_args if make_env_args is not None else {}
+        self._initialize_envs(num_envs=num_envs, make_env_args=args)
+
+    def _initialize_envs(self, num_envs: int, make_env_args: dict[str, Any]):
+        self.envs = [
+            NumpyToTorchV0(self.make_env_fn(**make_env_args)) for _ in range(num_envs)
+        ]
+        self.observation_space = self.envs[0].observation_space
+        self.action_space = self.envs[0].action_space
+
+        if type(self.envs[0].env) == AutoResetWrapper:
+            self._is_autoreset = True
+
+    def _reset(self, k: int) -> Frame:
+        env: Env = self.envs[k]
+        self._cumulated_reward[k] = 0.0
+
+        observation, info = env.reset(
+            seed=self._seed + k if self._seed is not None else None
+        )
+
+        self._timestep[k] = 0
+
+        ret: Frame = {
+            "obs": observation,
+            "stopped": torch.tensor(False),
+            "terminated": torch.tensor(False),
+            "truncated": torch.tensor(False),
+            "reward": torch.tensor(0.0),
+            "cumulated_reward": self._cumulated_reward[k],
+            "timestep": self._timestep[k],
+            **{"info/" + k: v for k, v in info.items()},
+        }
+
+        self._last_frame[k] = ret
+        return ret
+
+    def _step(self, k: int, action: ActType):
+        env = self.envs[k]
+
+        # Following part to simplify when gymnasium AutoResetWrapper
+        # will switch to Sutton & Barto’s notation.
+        if (not self._is_autoreset) or (not self._last_frame[k]["stopped"]):
+            observation, reward, terminated, truncated, info = env.step(action)
+        else:
+            observation = self.first_obs
+            info = self.first_info
+            terminated, truncated, reward = False, False, 0.0
+        if self._is_autoreset and (terminated or truncated):
+            # swap the observation and info
+            observation, self.first_obs = info.pop("final_observation"), observation
+            self.first_info = copy.copy(info)
+            info = self.first_info.pop("final_info")
+        # End of part to simplify.
+
+        self._cumulated_reward[k] += reward
+        self._timestep[k] += 1
+
+        ret: Frame = {
+            "obs": observation,
+            "stopped": torch.tensor(terminated or truncated),
+            "terminated": torch.tensor(terminated),
+            "truncated": torch.tensor(truncated),
+            "reward": torch.tensor(reward),
+            "cumulated_reward": self._cumulated_reward[k],
+            "timestep": self._timestep[k],
+            **{"info/" + k: v for k, v in info.items()},
+        }
+
+        self._last_frame[k] = ret
+        return ret
+
+    def forward(self, t: int = 0, **kwargs) -> None:
+        """Do one step by reading the `input_string` in the workspace at t-1
+        If t==0, environments are reset with the seed given in the constructor
+        Without seed provided, the environment is reset with a random seed.
+        """
+        super().forward(t, **kwargs)
+
+        states = []
+        if t == 0:
+            for k, env in enumerate(self.envs):
+                states.append(self._reset(k))
+        else:
+            action = self.get((self.input, t - 1))
+            assert action.size()[0] == self.num_envs, "Incompatible number of envs"
+
+            for k, env in enumerate(self.envs):
+                if self._is_autoreset or not self._last_frame[k]["stopped"]:
+                    states.append(self._step(k, action[k]))
+                else:
+                    states.append(self._last_frame[k])
+        self.set_state(states=_torch_cat_dict(states), t=t)
+
+
+class VisualGymAgent(GymAgent, ABC):
+    """
+    GymAgent compatible with visual observations
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def serialize(self):
+        """Return a serializable GymAgent without the environments"""
+        # TODO: add gymnasium environments to the serialization but not their unserializable attributes
+        copied_agent = copy.copy(self)
+        copied_agent.envs = None
+        return copied_agent
+
+
+class VisualSerialGymAgent(SerialGymAgent, VisualGymAgent):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+----!@#$----
+sabblium\agents\envs\__init__.py
+#  SaBBLium ― A Python library for building and simulating multi-agent systems.
+#
+#  Copyright © Facebook, Inc. and its affiliates.
+#  Copyright © Sorbonne University.
+#
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+#
+
+----!@#$----
+sabblium\agents\rl\functional.py
+#  SaBBLium ― A Python library for building and simulating multi-agent systems.
+#
+#  Copyright © Facebook, Inc. and its affiliates.
+#  Copyright © Sorbonne University.
+#
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+#
+
+import torch
+from torch import nn
+
+
+def _index(tensor_3d, tensor_2d):
+    x, y, z = tensor_3d.size()
+    t = tensor_3d.reshape(x * y, z)
+    tt = tensor_2d.reshape(x * y)
+    v = t[torch.arange(x * y), tt]
+    v = v.reshape(x, y)
+    return v
+
+
+def cumulated_reward(reward, done):
+    T, B = done.size()
+    done = done.detach().clone()
+
+    v_done, index_done = done.float().max(0)
+    assert v_done.eq(
+        1.0
+    ).all(), "[agents.rl.functional.cumulated_reward] Computing cumulated reward over unfinished trajectories."
+    arange = torch.arange(T, device=done.device).unsqueeze(-1).repeat(1, B)
+    index_done = index_done.unsqueeze(0).repeat(T, 1)
+
+    mask = arange.le(index_done)
+    reward = (reward * mask.float()).sum(0)
+    return reward.mean().item()
+
+
+def temporal_difference(critic, reward, must_bootstrap, discount_factor):
+    target = discount_factor * critic[1:].detach() * must_bootstrap.float() + reward[1:]
+    td = target - critic[:-1]
+    to_add = torch.zeros(1, td.size()[1]).to(td.device)
+    td = torch.cat([td, to_add], dim=0)
+    return td
+
+
+def doubleqlearning_temporal_difference(
+    q, action, q_target, reward, must_bootstrap, discount_factor
+):
+    action_max = q.max(-1)[1]
+    q_target_max = _index(q_target, action_max).detach()[1:]
+
+    mb = must_bootstrap.float()
+    target = reward[1:] + discount_factor * q_target_max * mb
+
+    q = _index(q, action)[:-1]
+    td = target - q
+    to_add = torch.zeros(1, td.size()[1], device=td.device)
+    td = torch.cat([td, to_add], dim=0)
+    return td
+
+
+def gae(critic, reward, must_bootstrap, discount_factor, gae_factor):
+    mb = must_bootstrap.float()
+    td = reward[1:] + discount_factor * mb * critic[1:].detach() - critic[:-1]
+    # handling td0 case
+    if gae_factor == 0.0:
+        return td
+
+    td_shape = td.shape[0]
+    gae_val = td[-1]
+    gae_vals = [gae_val]
+    for t in range(td_shape - 2, -1, -1):
+        gae_val = td[t] + discount_factor * gae_factor * mb[:-1][t] * gae_val
+        gae_vals.append(gae_val)
+    gae_vals = list([g.unsqueeze(0) for g in reversed(gae_vals)])
+    gae_vals = torch.cat(gae_vals, dim=0)
+    return gae_vals
+
+
+def compute_reinforce_loss(
+    reward, action_probabilities, baseline, action, done, discount_factor
+):
+    batch_size = reward.size()[1]
+
+    # Find the first occurrence of done for each element in the batch
+    v_done, trajectories_length = done.float().max(0)
+    trajectories_length += 1
+    assert v_done.eq(1.0).all()
+    max_trajectories_length = trajectories_length.max().item()
+    # Shorten trajectories for faster computation
+    reward = reward[:max_trajectories_length]
+    action_probabilities = action_probabilities[:max_trajectories_length]
+    baseline = baseline[:max_trajectories_length]
+    action = action[:max_trajectories_length]
+
+    # Create a binary mask to mask useless values (of size max_trajectories_length x batch_size)
+    arange = (
+        torch.arange(max_trajectories_length, device=done.device)
+        .unsqueeze(-1)
+        .repeat(1, batch_size)
+    )
+    mask = arange.lt(
+        trajectories_length.unsqueeze(0).repeat(max_trajectories_length, 1)
+    )
+    reward = reward * mask
+
+    # Compute discounted cumulated reward
+    cumulated_reward = [torch.zeros_like(reward[-1])]
+    for t in range(max_trajectories_length - 1, 0, -1):
+        cumulated_reward.append(discount_factor + cumulated_reward[-1] + reward[t])
+    cumulated_reward.reverse()
+    cumulated_reward = torch.cat([c.unsqueeze(0) for c in cumulated_reward])
+
+    # baseline loss
+    g = baseline - cumulated_reward
+    baseline_loss = g**2
+    baseline_loss = (baseline_loss * mask).mean()
+
+    # policy loss
+    log_probabilities = _index(action_probabilities, action).log()
+    policy_loss = log_probabilities * -g.detach()
+    policy_loss = policy_loss * mask
+    policy_loss = policy_loss.mean()
+
+    # entropy loss
+    entropy = torch.distributions.Categorical(action_probabilities).entropy() * mask
+    entropy_loss = entropy.mean()
+
+    return {
+        "baseline_loss": baseline_loss,
+        "policy_loss": policy_loss,
+        "entropy_loss": entropy_loss,
+    }
+
+
+def compute_critic_loss(
+    discount_factor, reward, must_bootstrap, action, q_values, q_target=None
+):
+    """Compute critic loss
+    Args:
+        discount_factor (float): The discount factor
+        reward (torch.Tensor): a (T × B) tensor containing the rewards
+        must_bootstrap (torch.Tensor): a (T × B) tensor containing 0 if the episode is completed at time $t$
+        action (torch.LongTensor): a (T) long tensor containing the chosen action
+        q_values (torch.Tensor): a (T × B × A) tensor containing Q values
+        q_target (torch.Tensor, optional): a (T × B × A) tensor containing Q target values
+
+    Returns:
+        torch.Scalar: The loss
+    """
+    if q_target is None:
+        q_target = q_values
+    max_q = q_target[1:].amax(dim=-1).detach()
+    target = reward[1:] + discount_factor * max_q * must_bootstrap[1:]
+    act = action.unsqueeze(dim=-1)
+    qvals = q_values.gather(dim=1, index=act).squeeze(dim=1)
+    return nn.MSELoss()(qvals[:-1], target)
+
+
+def compute_critic_loss_transitional(
+    discount_factor, reward, must_bootstrap, action, q_values, q_target=None
+):
+    """Compute critic loss
+    Args:
+        discount_factor (float): The discount factor
+        reward (torch.Tensor): a (2 × T × B) tensor containing the rewards
+        must_bootstrap (torch.Tensor): a (2 × T × B) tensor containing 0 if the episode is completed at time $t$
+        action (torch.LongTensor): a (2 × T) long tensor containing the chosen action
+        q_values (torch.Tensor): a (2 × T × B × A) tensor containing Q values
+        q_target (torch.Tensor, optional): a (2 × T × B × A) tensor containing target Q values
+
+    Returns:
+        torch.Scalar: The loss
+    """
+    if q_target is None:
+        q_target = q_values
+    max_q = q_target[1].amax(dim=-1).detach()
+    target = reward[1] + discount_factor * max_q * must_bootstrap[1]
+    act = action[0].unsqueeze(dim=-1)
+    qvals = q_values[0].gather(dim=1, index=act).squeeze(dim=1)
+    return nn.MSELoss()(qvals, target)
+
+
+def soft_update_params(net, target_net, tau):
+    for param, target_param in zip(net.parameters(), target_net.parameters()):
+        target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
+
+----!@#$----
+sabblium\agents\rl\README.md
+# sabblium.agents.rl
+
+A set of specific agents and functions for reinforcement learning.
+
+----!@#$----
+sabblium\agents\rl\replay_buffer.py
+#  SaBBLium ― A Python library for building and simulating multi-agent systems.
+#
+#  Copyright © Facebook, Inc. and its affiliates.
+#  Copyright © Sorbonne University.
+#
+#  This source code is licensed under the MIT license found in the
+#  LICENSE file in the root directory of this source tree.
+#
+
+import copy
+
+import torch
+
+from sabblium import Workspace
+
+
+class ReplayBuffer:
+    """
+    A replay buffer that stores workspaces states and allows to sample them.
+    """
+
+    def __init__(self, max_size: int, device: torch.device = torch.device("cpu")):
+        self.max_size = max_size
+        self.variables = None
+        self.position = 0
+        self.is_full = False
+        self.device = device
+
+    def init_workspace(self, all_tensors):
+        """
+        Create an array to stores workspace based on the given all_tensors keys.
+        shape of stores tensors : [key] => [self.max_size][time_size][key_dim]
+        Makes a copy of the input content.
+        """
+        if self.variables is None:
+            self.variables = {}
+            for k, v in all_tensors.items():
+                s = list(v.size())
+                s[1] = self.max_size
+                _s = copy.deepcopy(s)
+                s[0] = _s[1]
+                s[1] = _s[0]
+
+                tensor = torch.zeros(*s, dtype=v.dtype, device=self.device)
+                self.variables[k] = tensor
+            self.is_full = False
+            self.position = 0
+
+    def _insert(self, k, indexes, v):
+        self.variables[k][indexes] = v.detach().moveaxis((0, 1), (1, 0))
+
+    def put(self, workspace):
+        """
+        Add the content of a workspace to the replay buffer.
+        The given workspace must have keys of shape : [time_size][batch_size][key_dim]
+        """
+
+        new_data = {
+            k: workspace.get_full(k).detach().to(self.device) for k in workspace.keys()
+        }
+        self.init_workspace(new_data)
+
+        batch_size = None
+        arange = None
+        indexes = None
+
+        for k, v in new_data.items():
+            if batch_size is None:
+                batch_size = v.size()[1]
+                # print(f"{k}: batch size : {batch_size}")
+                # print("pos", self.position)
+            if self.position + batch_size < self.max_size:
+                # The case where the batch can be inserted before the end of the Replay Buffer.
+                if indexes is None:
+                    indexes = torch.arange(batch_size) + self.position
+                    arange = torch.arange(batch_size)
+                    self.position = self.position + batch_size
+            else:
+                # The case where the batch cannot be inserted before the end of the replay buffer
+                # A part is at the end, the other part is in the beginning.
+                self.is_full = True
+                # the number of data at the end of the RB
+                batch_end_size = self.max_size - self.position
+                # the number of data at the beginning of the RB
+                batch_begin_size = batch_size - batch_end_size
+                if indexes is None:
+                    # print(f"{k}: batch size : {batch_size}")
+                    # print("pos", self.position)
+                    # the part of the indexes at the end of the Replay Buffer.
+                    indexes = torch.arange(batch_end_size) + self.position
+                    arange = torch.arange(batch_end_size)
+                    # the part of the indexes at the beginning of the Replay Buffer.
+                    # print("insertion intermediate computed:", indexes)
+                    indexes = torch.cat((indexes, torch.arange(batch_begin_size)), 0)
+                    arange = torch.cat((arange, torch.arange(batch_begin_size)), 0)
+                    # print("insertion full:", indexes)
+                    self.position = batch_begin_size
+            indexes = indexes.to(dtype=torch.long, device=v.device)
+            arange = arange.to(dtype=torch.long, device=v.device)
+            # print("insertion standard:", indexes)
+            # print("v shape", v.detach().shape)
+            self._insert(k, indexes, v)
+
+    def size(self):
+        if self.is_full:
+            return self.max_size
+        else:
+            return self.position
+
+    def print_obs(self):
+        print(f"position: {self.position}")
+        print(self.variables["env/env_obs"])
+
+    def get_shuffled(self, batch_size):
+        who = torch.randint(
+            low=0, high=self.size(), size=(batch_size,), device=self.device
+        )
+        workspace = Workspace()
+        for k in self.variables:
+            workspace.set_full(k, self.variables[k][who].transpose(0, 1))
+
+        return workspace
+
+    def to(self, device):
+        n_vars = {k: v.to(device) for k, v in self.variables.items()}
+        self.variables = n_vars
+
+--END--
