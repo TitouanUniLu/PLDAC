@@ -1,0 +1,14 @@
+<component name="CopyrightManager">
+  <settings default="SaBBLium">
+    <module2copyright>
+      <element module="Project Files" copyright="SaBBLium" />
+    </module2copyright>
+    <LanguageOptions name="Python">
+      <option name="fileTypeOverride" value="3" />
+      <option name="block" value="false" />
+      <option name="separateAfter" value="true" />
+      <option name="lenBefore" value="0" />
+      <option name="lenAfter" value="0" />
+    </LanguageOptions>
+  </settings>
+</component>

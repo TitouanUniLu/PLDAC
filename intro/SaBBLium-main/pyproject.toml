@@ -1,0 +1,83 @@
+[project]
+name = "SaBBLium"
+dynamic = ["version"]
+authors = [{ name = "Ludovic Denoyer", email = "denoyer@fb.com" },
+    { name = "Alfredo de la Fuente" },
+    { name = "Song Duong" },
+    { name = "Jean-Baptiste Gaya", email = "jbgaya@fb.com" },
+    { name = "Pierre-Alexandre Kamienny", email = "pakamienny@fb.com" },
+    { name = "Daniel H. Thompson" },
+    { name = "Olivier Sigaud", email = "olivier.sigaud@isir.upmc.fr" },
+    { name = "Benjamin Piwowarski", email = "benjamin.piwowarski@isir.upmc.fr" },
+    { name = "Mathis Koroglu", email = "mathis.koroglu@etu.sorbonne-universite.fr" }]
+maintainers = [{ name = "Mathis Koroglu", email = "mathis.koroglu@etu.sorbonne-universite.fr" }]
+
+description = "SaBBLium is a Flexible and Simple Library for Learning Sequential Agents"
+keywords = ["sequential learning", "reinforcement learning"]
+
+readme = "README.md"
+license = { file = "LICENSE" }
+
+requires-python = ">=3.10"
+classifiers = ["Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = ["torchvision",
+    "gymnasium>=0.28.1",
+    "hydra-core"]
+
+[project.optional-dependencies]
+logger = ["tensorboard", "wandb", "pandas", "tqdm"]
+plot = ["matplotlib", "seaborn"]
+dev = ["pre-commit", "black", "ruff"]
+all = [
+    "tensorboard",
+    "wandb",
+    "pandas",
+    "tqdm",
+    "matplotlib",
+    "seaborn",
+    "pre-commit",
+    "black",
+    "ruff"]
+
+
+[project.urls]
+repository = "https://github.com/Arlaz/SaBBLium"
+
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["sabblium*"]
+namespaces = true
+
+[tool.setuptools_scm]
+write_to = "sabblium/_version.py"
+
+[tool.black]
+# Black configuration
+line-length = 88
+target-version = ['py310', 'py311']
+
+[tool.ruff]
+# Ruff configuration
+line-length = 88
+fix = true
+target-version = "py311"
+extend-exclude = [".idea"]
+
+[tool.ruff.isort]
+lines-after-imports = 2
+known-first-party = ["sabblium"]
