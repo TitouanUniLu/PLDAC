@@ -292,7 +292,11 @@ class DiscreteQAgent(Agent):
 
     def forward(self, t: int, choose_action=True, **kwargs):
         # Retrieve the current feature vector for time step t from AttributeAccessAgent
+        print('features')
+        print(self.attribute_access_agent.get_features(t))
         current_features = self.attribute_access_agent.get_features(t)
+        print('current features')
+        print(current_features)
         #print("obs ", current_features)
         
         # Assume current_features is a tensor; if not, convert it to a tensor
@@ -519,7 +523,7 @@ params={
     "seed": 3,
     "max_grad_norm": 0.5,
     "epsilon": 0.02,
-    "n_envs": 2,
+    "n_envs": 1,
     "n_steps": 32,
     "eval_interval": 2000,
     "nb_measures": 200,
