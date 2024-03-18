@@ -143,6 +143,10 @@ class AttributeAccessAgent(Agent):
             features = self.cnn_agent.process_image(image_pre_processed) 
             #print(features.shape)
             self.list_features[env_index].append(features) #on ajoute pareil pour les features
+            print(features.shape)
+            self.set(("env/env_obs", t), features)
+            obs = self.get("env/env_obs", t)
+            print('OBSERVATION TEST', obs)
     def get_features(self, t):
         if t < len(self.list_features[0]):
             tensor = self.list_features[0][t]
@@ -290,7 +294,6 @@ class DiscreteQAgent(Agent):
         # Store the reference to AttributeAccessAgent to access the features
         self.attribute_access_agent = attribute_access_agent
         print('num envs discreteqagent: ', self.attribute_access_agent.env_agent.num_envs)
-        print(self.attribute_access_agent)
 
     def forward(self, t: int, choose_action=True, **kwargs):
         # Retrieve the current feature vector for time step t from AttributeAccessAgent
