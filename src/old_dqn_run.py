@@ -341,136 +341,106 @@ def create_best_dqn_agent(cfg, train_env_agent, eval_env_agent):
     #print("success create_dqn_agent")
     return train_agent, eval_agent, q_agent, target_q_agent
 
-# a test avec celui la, voir si ca marche
-def run_best_dqn(cfg, compute_critic_loss):
+def run_dqn(cfg):
     # 1)  Build the  logger
     logger = Logger(cfg)
     best_reward = float('-inf')
 
-    # 2) Create the environment agents
+    # 2) Create the environment agent
     train_env_agent, eval_env_agent = get_env_agents(cfg)
-
-    # 3) Create the DQN-like Agent
-    train_agent, eval_agent, q_agent, target_q_agent = create_best_dqn_agent(
+    
+    # 3) Create the DQN Agent
+    train_agent, eval_agent, q_agent = create_dqn_agent(
         cfg, train_env_agent, eval_env_agent
     )
 
-    # 5) Configure the workspace to the right dimension
     # Note that no parameter is needed to create the workspace.
-    # In the training loop, calling the agent() and critic_agent()
+    # In the training loop, calling the train_agent
     # will take the workspace as parameter
-    train_workspace = Workspace()  # Used for training
-    rb = ReplayBuffer(max_size=cfg.algorithm.buffer_size)
 
-    # 6) Configure the optimizer over the dqn agent
+    # 6) Configure the optimizer
     optimizer = setup_optimizer(cfg, q_agent)
     nb_steps = 0
-    last_eval_step = 0
-    last_critic_update_step = 0
-    best_agent = eval_agent.agent.agents[1]
-
-    # 7) Training loop
-    pbar = tqdm(range(cfg.algorithm.max_epochs))
-    for epoch in pbar:
-        # Execute the agent in the workspace
-        if epoch > 0:
-            train_workspace.zero_grad()
-            train_workspace.copy_n_last_steps(1)
-            train_agent(
-                train_workspace, t=1, n_steps=cfg.algorithm.n_steps, stochastic=True
-            )
-        else:
-            train_agent(
-                train_workspace, t=0, n_steps=cfg.algorithm.n_steps, stochastic=True
-            )
-
-        # Get the transitions
-        transition_workspace = train_workspace.get_transitions()
-
-        action = transition_workspace["action"]
-        nb_steps += action[0].shape[0]
+    tmp_steps = 0
+    nb_measures = 0
+    
+    while nb_measures < 200: #cfg.algorithm.nb_measures
+        train_workspace = Workspace()
         
-        # Adds the transitions to the workspace
-        rb.put(transition_workspace)
-        if rb.size() > cfg.algorithm.learning_starts:
-            for _ in range(cfg.algorithm.n_updates):
-                rb_workspace = rb.get_shuffled(cfg.algorithm.batch_size)
+        # default_action = torch.zeros(cfg.algorithm.n_envs, dtype=torch.long)
+        # print(default_action)
+        # train_workspace.set("action", 0, default_action)
+        # print('current workspace action space')
+        # print(train_workspace['action'])
+        # print(train_workspace["action"].shape)
+        
+        # Run 
+        train_agent(train_workspace, t=0, stop_variable="env/done", stochastic=True)
+        
+        q_values, done, truncated, reward, action = train_workspace[
+            "q_values", "env/done", "env/truncated", "env/reward", "action"
+        ]
 
-                # The q agent needs to be executed on the rb_workspace workspace (gradients are removed in workspace)
-                q_agent(rb_workspace, t=0, n_steps=2, choose_action=False)
-                q_values, terminated, reward, action = rb_workspace[
-                    "q_values", "env/terminated", "env/reward", "action"
-                ]
+        nb_steps += len(action.flatten())
+        
+        # Determines whether values of the critic should be propagated
+        # True if the episode reached a time limit or if the task was not done
+        # See https://colab.research.google.com/drive/1erLbRKvdkdDy0Zn1X_JhC01s1QAt4BBj
+        must_bootstrap = torch.logical_or(~done, truncated)
+        
+        # Compute critic loss
+        critic_loss = compute_critic_loss(cfg, reward, must_bootstrap, q_values, action)
 
-                with torch.no_grad():
-                    target_q_agent(rb_workspace, t=0, n_steps=2, stochastic=True)
-                target_q_values = rb_workspace["q_values"]
+        # Store the loss for tensorboard display
+        logger.add_log("critic_loss", critic_loss, nb_steps)
 
-                # Determines whether values of the critic should be propagated
-                must_bootstrap = ~terminated[1]
+        optimizer.zero_grad()
+        critic_loss.backward()
+        torch.nn.utils.clip_grad_norm_(
+            q_agent.parameters(), cfg.algorithm.max_grad_norm
+        )
+        optimizer.step()
 
-                # Compute critic loss
-                # FIXME: homogénéiser les notations (soit tranche temporelle, soit rien)
-                critic_loss = compute_critic_loss(
-                    cfg, reward, must_bootstrap, q_values, target_q_values[1], action
-                )
-                # Store the loss for tensorboard display
-                logger.add_log("critic_loss", critic_loss, nb_steps)
-
-                optimizer.zero_grad()
-                critic_loss.backward()
-                torch.nn.utils.clip_grad_norm_(q_agent.parameters(), cfg.algorithm.max_grad_norm)
-                optimizer.step()
-                if nb_steps - last_critic_update_step > cfg.algorithm.target_critic_update:
-                    last_critic_update_step = nb_steps
-                    target_q_agent.agent = copy.deepcopy(q_agent.agent)
-
-        # Evaluate the current policy
-        if nb_steps - last_eval_step > cfg.algorithm.eval_interval:
-            last_eval_step = nb_steps
-            eval_workspace = Workspace()
+        if nb_steps - tmp_steps > cfg.algorithm.eval_interval:
+            nb_measures += 1
+            tmp_steps = nb_steps
+            eval_workspace = Workspace()  # Used for evaluation
             eval_agent(
                 eval_workspace, t=0, stop_variable="env/done", choose_action=True
             )
             rewards = eval_workspace["env/cumulated_reward"][-1]
             mean = rewards.mean()
-            logger.log_reward_losses(rewards, nb_steps)
-            pbar.set_description(f"nb steps: {nb_steps}, reward: {mean:.3f}")
+            logger.add_log("reward", mean, nb_steps)
+            print(f"nb_steps: {nb_steps}, reward: {mean}")
             if cfg.save_best and mean > best_reward:
                 best_reward = mean
-                best_agent = copy.deepcopy(eval_agent.agent.agents[1])
                 directory = "./dqn_critic/"
                 if not os.path.exists(directory):
                     os.makedirs(directory)
-                filename = directory + "dqn0_" + str(mean.item()) + ".agt"
+                filename = directory + "dqn_" + str(mean.item()) + ".agt"
                 eval_agent.save_model(filename)
+                
+    return train_agent, eval_agent, q_agent
 
-    return best_agent
-
-new_params={
+params={
   "save_best": False,
   "logger":{
     "classname": "bbrl.utils.logger.TFLogger",
-    "log_dir": "../tblogs/dqn-buffer-" + str(time.time()),
+    "log_dir": "./tblogs/rl-cnn-" + str(time.time()),
     "cache_size": 10000,
     "every_n_seconds": 10,
     "verbose": False,    
     },
 
   "algorithm":{
-    "seed": 4,
+    "seed": 3,
     "max_grad_norm": 0.5,
     "epsilon": 0.02,
     "n_envs": 8,
     "n_steps": 32,
-    "n_updates": 32,
     "eval_interval": 2000,
-    "learning_starts": 2000,
+    "nb_measures": 200,
     "nb_evals": 10,
-    "buffer_size": 1e6,
-    "batch_size": 256,
-    "target_critic_update": 5000,
-    "max_epochs": 3500,
     "discount_factor": 0.99,
     "architecture":{"hidden_size": [128, 128]},
   },
@@ -480,11 +450,10 @@ new_params={
   "optimizer":
   {
     "classname": "torch.optim.Adam",
-    "lr": 1e-3,
+    "lr": 2e-3,
   }
 }
 
-# +
 import sys
 import os
 import os.path as osp
@@ -492,15 +461,9 @@ import os.path as osp
 path = os.getcwd()
 print(f"Launch tensorboard from the shell:\n{osp.dirname(sys.executable)}/tensorboard --logdir={path}/tblogs")
 
-cfg=OmegaConf.create(new_params)
+cfg=OmegaConf.create(params)
 torch.manual_seed(cfg.algorithm.seed)
-
-print('Looking for best agent')
-best_agent = run_best_dqn(cfg, compute_critic_loss)
-
-env = make_env(cfg.gym_env.env_name, render_mode="rgb_array")
-record_video(env, best_agent, "videos/dqn-full.mp4")
-video_display("videos/dqn-full.mp4")
+train_agent, eval_agent, q_agent = run_dqn(cfg)
 
 # Methode pour set une nouvelle variable dans le workspace, ici c'est juste un exemple avec un tensor 
 # workspace.set('env/images', 0, torch.tensor((1,2)))
