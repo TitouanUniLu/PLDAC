@@ -312,7 +312,29 @@ def create_dqn_agent(cfg, train_env_agent, eval_env_agent):
     #print("success create_dqn_agent")
     return train_agent, eval_agent, q_agent
 
-# -
+def create_best_dqn_agent(cfg, train_env_agent, eval_env_agent):
+    pre_processing_agent = PreProcessingAgent()
+    cnn_agent = CNNAgent()
+
+    attribute_access_train = AttributeAccessAgent(train_env_agent, pre_processing_agent, cnn_agent)
+    attribute_access_eval = AttributeAccessAgent(eval_env_agent, pre_processing_agent, cnn_agent)
+
+
+    critic = DiscreteQAgent(TENSRSIZE, cfg.algorithm.architecture.hidden_size, 2, attribute_access_train)
+    target_critic = copy.deepcopy(critic)
+    target_q_agent = TemporalAgent(target_critic)
+
+    #training
+    q_agent = TemporalAgent(critic)
+    explorer = EGreedyActionSelector(cfg.algorithm.epsilon)
+    tr_agent = Agents(train_env_agent, attribute_access_train, critic, explorer)
+    train_agent = TemporalAgent(tr_agent)
+
+    #eval
+    ev_agent = Agents(eval_env_agent, attribute_access_eval, critic)
+    eval_agent = TemporalAgent(ev_agent)
+    #print("success create_dqn_agent")
+    return train_agent, eval_agent, q_agent, target_q_agent
 
 def run_dqn(cfg):
     # 1)  Build the  logger
@@ -405,7 +427,7 @@ def run_best_dqn(cfg, compute_critic_loss):
     train_env_agent, eval_env_agent = get_env_agents(cfg)
 
     # 3) Create the DQN-like Agent
-    train_agent, eval_agent, q_agent, target_q_agent = create_dqn_agent(
+    train_agent, eval_agent, q_agent, target_q_agent = create_best_dqn_agent(
         cfg, train_env_agent, eval_env_agent
     )
 
@@ -533,6 +555,43 @@ params={
   }
 }
 
+new_params={
+  "save_best": False,
+  "logger":{
+    "classname": "bbrl.utils.logger.TFLogger",
+    "log_dir": "./tblogs/dqn-buffer-" + str(time.time()),
+    "cache_size": 10000,
+    "every_n_seconds": 10,
+    "verbose": False,    
+    },
+
+  "algorithm":{
+    "seed": 4,
+    "max_grad_norm": 0.5,
+    "epsilon": 0.02,
+    "n_envs": 8,
+    "n_steps": 32,
+    "n_updates": 32,
+    "eval_interval": 2000,
+    "learning_starts": 2000,
+    "nb_evals": 10,
+    "buffer_size": 1e6,
+    "batch_size": 256,
+    "target_critic_update": 5000,
+    "max_epochs": 3500,
+    "discount_factor": 0.99,
+    "architecture":{"hidden_size": [128, 128]},
+  },
+  "gym_env":{
+    "env_name": "CartPole-v1",
+  },
+  "optimizer":
+  {
+    "classname": "torch.optim.Adam",
+    "lr": 1e-3,
+  }
+}
+
 # +
 import sys
 import os
@@ -542,12 +601,16 @@ from pathlib import Path
 path = os.getcwd()
 print(f"Launch tensorboard from the shell:\n{osp.dirname(sys.executable)}/tensorboard --logdir={path}/tblogs")
 
-cfg=OmegaConf.create(params)
+cfg=OmegaConf.create(new_params)
 torch.manual_seed(cfg.algorithm.seed)
 #train_agent, eval_agent, q_agent = run_dqn(cfg)
 
 print('Looking for best agent')
 best_agent = run_best_dqn(cfg, compute_critic_loss)
+
+env = make_env(cfg.gym_env.env_name, render_mode="rgb_array")
+record_video(env, best_agent, "videos/dqn-full.mp4")
+video_display("videos/dqn-full.mp4")
 
 # Methode pour set une nouvelle variable dans le workspace, ici c'est juste un exemple avec un tensor 
 # workspace.set('env/images', 0, torch.tensor((1,2)))
