@@ -119,41 +119,27 @@ class AttributeAccessAgent(Agent):
         #init de la liste de listes pour store les images
         self.list_images = [[] for _ in range(self.env_agent.num_envs)]
         self.list_features = [[] for _ in range(self.env_agent.num_envs)]
-        print('env size: ', self.env_agent.num_envs)
+        #print('env size: ', self.env_agent.num_envs)
     
     def forward(self, t: int, **kwargs):
-        #print('Currently at time ', t)
-        #ici on fait le forward pour chaque agent (donc en fonction du nombre d'environments)
+        # Process for each environment
         for env_index in range(self.env_agent.num_envs):
-            image = self.env_agent.envs[env_index].render() #on recupere l'image
-            display = False #pour afficher en temps reel mais pas utile pour +1 env
-            if display: #print a chaque temps l'image originale
-                clear_output(wait=True)   
-                plt.imshow(image)  
-                plt.axis('off')
-                plt.show()
-                print("Displayed image at time", t, " of agent ", env_index)
-            #print(image.shape)
-            
-            image_pre_processed = self.pre_processing_agent.preprocess(image) #image renvoyee pas le preprocesseur
+            image = self.env_agent.envs[env_index].render()  # Retrieve the image
+            image_pre_processed = self.pre_processing_agent.preprocess(image)  # Preprocess image
+            self.list_images[env_index].append(image_pre_processed)  # Store preprocessed image
 
-            self.list_images[env_index].append(image_pre_processed) #on ajoute au bon endroit dans la liste
+            features = self.cnn_agent.process_image(image_pre_processed)  # Process image to extract features
+            self.list_features[env_index].append(features)
 
-            # attention a bien mettre l'image preprocessed ici sinon y a des pb avec le cnn
-            features = self.cnn_agent.process_image(image_pre_processed) 
-            #print(features.shape)
-            self.list_features[env_index].append(features) #on ajoute pareil pour les features
-            print(features.shape)
-            self.set(("env/env_obs", t), features)
-            obs = self.get("env/env_obs", t)
-            print('OBSERVATION TEST', obs)
     def get_features(self, t):
+        # Retrieve and return the features for all environments at time t
         if t < len(self.list_features[0]):
-            tensor = self.list_features[0][t]
-            #print(type(tensor))
-            return tensor
+            # Collect features for all environments at time t
+            features = [self.list_features[env_index][t] for env_index in range(self.env_agent.num_envs)]
+            # Stack features to create a batch
+            features_batch = torch.stack(features)
+            return features_batch
         else:
-            # Handle the case where the tensor does not exist
             print(f"Features for timestep {t} are not available.")
             return None
 
@@ -259,11 +245,8 @@ def displayImagesPerAgent(images_per_agent):
         
         plt.tight_layout()
         plt.show()
-# -
 
-# OK ON VA ESSAYER DE FAIRE UN AGENT DQN MAINTENANT
 
-# +
 def build_mlp(sizes, activation, output_activation=nn.Identity()):
     """Helper function to build a multi-layer perceptron (function from $\mathbb R^n$ to $\mathbb R^p$)
     
@@ -278,7 +261,7 @@ def build_mlp(sizes, activation, output_activation=nn.Identity()):
         layers += [nn.Linear(sizes[j], sizes[j + 1]), act]
     return nn.Sequential(*layers)
 
-#QUAND UN BUILD LE MLP FAUT QUE sizes SOIT DU TYPE [128, 64, 2]
+#QUAND UN BUILD LE MLP FAUT QUE sizes SOIT DU TYPE [128, 64, 2] par ex
 #ex: mlp = build_mlp(sizes=[128] + [64, 64] + [2], activation=nn.ReLU(), output_activation=nn.Identity())
 
 
@@ -293,21 +276,23 @@ class DiscreteQAgent(Agent):
         )
         # Store the reference to AttributeAccessAgent to access the features
         self.attribute_access_agent = attribute_access_agent
-        print('num envs discreteqagent: ', self.attribute_access_agent.env_agent.num_envs)
+        #print('num envs discreteqagent: ', self.attribute_access_agent.env_agent.num_envs)
+        #print(self.attribute_access_agent)
 
     def forward(self, t: int, choose_action=True, **kwargs):
         # Retrieve the current feature vector for time step t from AttributeAccessAgent
-        current_features = self.attribute_access_agent.get_features(t)
-        print("obs ", current_features)
+        current_features = self.attribute_access_agent.get_features(t).squeeze(1)
+        #print("obs ", current_features)
         
         # Assume current_features is a tensor; if not, convert it to a tensor
         q_values = self.model(current_features)
         self.set(("q_values", t), q_values)
-        print('q values: ', q_values)
+        #print('q values: ', q_values)
 
         if choose_action:
             action = q_values.argmax(dim=1)
-            print('action: ', action)
+            #print('action: ', action)
+            #print('action shape: ', action.size()[0])
             self.set(("action", t), action)
 
 
@@ -320,6 +305,8 @@ class EGreedyActionSelector(Agent):
         # Retrieves the q values 
         # (matrix nb. of episodes x nb. of actions)
         q_values = self.get(("q_values", t))
+        #print(q_values)
+        #print(q_values.size())
         size, nb_actions = q_values.size()
 
         # Flag 
@@ -398,12 +385,12 @@ cnn_agent = CNNAgent()
 workspace = Workspace()
 
 def get_env_agents(cfg):
-    print(cfg.algorithm.n_envs)
+    #print(cfg.algorithm.n_envs)
     train_env_agent = ParallelGymAgent(partial(make_env, cfg.gym_env.env_name, render_mode="rgb_array", autoreset=False), 
                                         cfg.algorithm.n_envs).seed(cfg.algorithm.seed) #cfg.algorithm.n_envs
     eval_env_agent = ParallelGymAgent(partial(make_env, cfg.gym_env.env_name, render_mode="rgb_array"), 
                                         cfg.algorithm.n_envs).seed(cfg.algorithm.seed)
-    print("success get_env_agents")
+    #print("success get_env_agents")
     return train_env_agent, eval_env_agent
 
 def create_dqn_agent(cfg, train_env_agent, eval_env_agent):
@@ -422,7 +409,7 @@ def create_dqn_agent(cfg, train_env_agent, eval_env_agent):
     #eval
     ev_agent = Agents(eval_env_agent, attribute_access_eval, critic)
     eval_agent = TemporalAgent(ev_agent)
-    print("success create_dqn_agent")
+    #print("success create_dqn_agent")
     return train_agent, eval_agent, q_agent
 
 # -
@@ -513,7 +500,7 @@ params={
   "save_best": False,
   "logger":{
     "classname": "bbrl.utils.logger.TFLogger",
-    "log_dir": "./tblogs/dqn-simple-" + str(time.time()),
+    "log_dir": "./tblogs/rl-cnn-" + str(time.time()),
     "cache_size": 10000,
     "every_n_seconds": 10,
     "verbose": False,    
@@ -523,7 +510,7 @@ params={
     "seed": 3,
     "max_grad_norm": 0.5,
     "epsilon": 0.02,
-    "n_envs": 2,
+    "n_envs": 8,
     "n_steps": 32,
     "eval_interval": 2000,
     "nb_measures": 200,
@@ -545,8 +532,29 @@ params={
 import sys
 import os
 import os.path as osp
-print(f"Launch tensorboard from the shell:\n{osp.dirname(sys.executable)}/tensorboard --logdir={os.getcwd()}/tblogs")
+from pathlib import Path
+
+path = os.getcwd()
+print(f"Launch tensorboard from the shell:\n{osp.dirname(sys.executable)}/tensorboard --logdir={path}/tblogs")
 
 cfg=OmegaConf.create(params)
 torch.manual_seed(cfg.algorithm.seed)
 train_agent, eval_agent, q_agent = run_dqn(cfg)
+
+'''
+cfg=OmegaConf.create(params)
+torch.manual_seed(cfg.algorithm.seed)
+
+workspace = Workspace()
+print(workspace.variables)
+workspace.set('env/images', 0, torch.tensor((1,2)))
+print(workspace['env/images'])
+env_agent = ParallelGymAgent(partial(make_env, cfg.gym_env.env_name, render_mode="rgb_array", autoreset=False), cfg.algorithm.n_envs, reward_at_t=False)
+
+cnnagent = CNNAgent()
+agent = RLAgent(TENSRSIZE, cfg.algorithm.architecture.hidden_size, 2)
+
+env_agent(workspace, t=0)
+print(workspace.variables)
+print(workspace)
+'''
