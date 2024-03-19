@@ -1,108 +1,32 @@
-from easypip import easyimport, easyinstall, is_notebook
-
-# +
+# General imports
 import os
+import os.path as osp
 import sys
 from pathlib import Path
-import math
-import numpy as np
-
+from easypip import easyimport, easyinstall, is_notebook
 from moviepy.editor import ipython_display as video_display
 import time
 from tqdm.auto import tqdm
-from typing import Tuple, Optional
 from functools import partial
-
 from omegaconf import OmegaConf
-import torch
-import bbrl_gymnasium
-
 import copy
-from abc import abstractmethod, ABC
+import matplotlib.pyplot as plt
+import cv2
+
+# Torch imports
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from time import strftime
 
-from gymnasium import Env, Space, Wrapper, make
-
+#BBRL imports
 from bbrl.agents.agent import Agent
 from bbrl import get_arguments, get_class, instantiate_class
 from bbrl.workspace import Workspace
 from bbrl.agents import Agents, TemporalAgent
 from bbrl.agents.gymnasium import GymAgent, ParallelGymAgent, make_env, record_video
 from bbrl.utils.replay_buffer import ReplayBuffer
-
-import torch.nn as nn
-
-from typing import Tuple
 from bbrl.agents.gymnasium import make_env, GymAgent, ParallelGymAgent
-from functools import partial
-
 from bbrl import instantiate_class
-
-import matplotlib.pyplot as plt
-
-from torch.autograd import Variable
-from torch.nn import Linear, ReLU, CrossEntropyLoss, Sequential, Conv2d, MaxPool2d, Module, Softmax, BatchNorm2d, Dropout
-from torch.optim import Adam, SGD
-
-from IPython.display import clear_output
-
-import cv2
-import numpy as np
-
-from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
-from keras.optimizers import Adam
-
-from keras.models import Sequential
-from keras.layers import Conv2D, MaxPooling2D, Flatten
-
-import random as python_random
-import tensorflow as tf
-
-
-# -
-
-# Utility function for launching tensorboard
-# For Colab - otherwise, it is easier and better to launch tensorboard from
-# the terminal
-def setup_tensorboard(path):
-    path = Path(path)
-    answer = ""
-    if is_notebook():
-        if get_ipython().__class__.__module__ == "google.colab._shell":
-            answer = "y"
-        while answer not in ["y", "n"]:
-                answer = input(f"Do you want to launch tensorboard in this notebook [y/n] ").lower()
-
-    if answer == "y":
-        get_ipython().run_line_magic("load_ext", "tensorboard")
-        get_ipython().run_line_magic("tensorboard", f"--logdir {path.absolute()}")
-    else:
-        import sys
-        import os
-        import os.path as osp
-        print(f"Launch tensorboard from the shell:\n{osp.dirname(sys.executable)}/tensorboard --logdir={path.absolute()}")
-
-
-
-# TEST AVEC UN RANDOM AGENT
-
-# meme randomAgent que dans les notebooks
-class RandomAgent(Agent):
-    def __init__(self, action_dim):
-        super().__init__()
-        self.action_dim = action_dim
-        self.all_observations = []
-
-    def forward(self, t: int, choose_action=True, **kwargs):
-        """An Agent can use self.workspace"""
-        obs = self.get(("env/env_obs", t))
-        action = torch.randint(0, self.action_dim, (len(obs), ))
-        self.set(("action", t), action)
-        self.all_observations.append(obs)
-
 
 
 #un des agents les plus importants:
@@ -113,7 +37,7 @@ class AttributeAccessAgent(Agent):
     def __init__(self, env_agent, pre_processing_agent, cnn_agent):
         super().__init__()
         #les agents
-        self.env_agent = env_agent  # CustomParallelGymAgent ou ParallelGymAgent
+        self.env_agent = env_agent  # ParallelGymAgent
         self.pre_processing_agent = pre_processing_agent
         self.cnn_agent = cnn_agent
         #init de la liste de listes pour store les images
@@ -132,20 +56,21 @@ class AttributeAccessAgent(Agent):
             self.list_features[env_index].append(features)
 
     def get_features(self, t):
-        # Retrieve and return the features for all environments at time t
+        #On recupere les features pour chaque env a chaque temps t
         if t < len(self.list_features[0]):
-            # Collect features for all environments at time t
             features = [self.list_features[env_index][t] for env_index in range(self.env_agent.num_envs)]
-            # Stack features to create a batch
+            # batch
             features_batch = torch.stack(features)
             return features_batch
         else:
-            print(f"Features for timestep {t} are not available.")
+            print(f"Features for timestep {t} pas dispo")
             return None
 
 
 # agent pour gerer le preprocessing, rien de trop particulier
 # on pourrait faire du preprocessing plus complexe si jamais on obtient des mauvais resultats
+# faudrait reprendre celui de Mathis pour aller plus vite
+# faudra aussi modifier la classe pour gerer plusieurs images (3 ou 4 d'un coup)
 class PreProcessingAgent(Agent):
     def __init__(self):
         super().__init__()
@@ -158,6 +83,7 @@ class PreProcessingAgent(Agent):
 
 #modele CNN: c'est une implementation plutot basqiue de cnn, truc classique qu'on trouve sur internet
 #on fait avec 5 layers pcq a priori ca devrait suffire
+#c'est possible qu'on ai un probleme ici a cause d'une grosse perte d'information (meme apres 100k pas la reward change pas)
 TENSRSIZE = 32
 class CNN(nn.Module):
     def __init__(self):
@@ -189,7 +115,7 @@ class CNN(nn.Module):
             nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 256 x 7 x 7
         )
         
-        self.fc_layers = nn.Sequential( #on cherche a avoir un vecteur de taille 128 (une ligne)
+        self.fc_layers = nn.Sequential( #on cherche a avoir un vecteur de taille TENSRSIZE (une ligne)
             nn.Flatten(),
             nn.Linear(256 * 7 * 7, 512),
             nn.ReLU(),
@@ -248,13 +174,6 @@ def displayImagesPerAgent(images_per_agent):
 
 
 def build_mlp(sizes, activation, output_activation=nn.Identity()):
-    """Helper function to build a multi-layer perceptron (function from $\mathbb R^n$ to $\mathbb R^p$)
-    
-    Args:
-        sizes (List[int]): the number of neurons at each layer
-        activation (nn.Module): a PyTorch activation function (after each layer but the last)
-        output_activation (nn.Module): a PyTorch activation function (last layer)
-    """
     layers = []
     for j in range(len(sizes) - 1):
         act = activation if j < len(sizes) - 2 else output_activation
@@ -265,8 +184,6 @@ def build_mlp(sizes, activation, output_activation=nn.Identity()):
 #ex: mlp = build_mlp(sizes=[128] + [64, 64] + [2], activation=nn.ReLU(), output_activation=nn.Identity())
 
 
-# -
-
 class DiscreteQAgent(Agent):
     def __init__(self, input_dim, hidden_layers, action_dim, attribute_access_agent):
         super().__init__()
@@ -274,7 +191,6 @@ class DiscreteQAgent(Agent):
             [input_dim] + list(hidden_layers) + [action_dim], 
             activation=nn.ReLU()
         )
-        # Store the reference to AttributeAccessAgent to access the features
         self.attribute_access_agent = attribute_access_agent
         #print('num envs discreteqagent: ', self.attribute_access_agent.env_agent.num_envs)
         #print(self.attribute_access_agent)
@@ -284,7 +200,6 @@ class DiscreteQAgent(Agent):
         current_features = self.attribute_access_agent.get_features(t).squeeze(1)
         #print("obs ", current_features)
         
-        # Assume current_features is a tensor; if not, convert it to a tensor
         q_values = self.model(current_features)
         self.set(("q_values", t), q_values)
         #print('q values: ', q_values)
@@ -302,8 +217,6 @@ class EGreedyActionSelector(Agent):
         self.epsilon = epsilon
 
     def forward(self, t: int, **kwargs):
-        # Retrieves the q values 
-        # (matrix nb. of episodes x nb. of actions)
         q_values = self.get(("q_values", t))
         #print(q_values)
         #print(q_values.size())
@@ -321,13 +234,7 @@ class EGreedyActionSelector(Agent):
         self.set(("action", t), action.long())
         self.epsilon = max(0.001, self.epsilon * 0.995)
 
-
-
-# +
-from bbrl import instantiate_class
-
 class Logger():
-
     def __init__(self, cfg):
         self.logger = instantiate_class(cfg.logger)
 
@@ -366,9 +273,6 @@ def compute_critic_loss(cfg, reward: torch.Tensor, must_bootstrap: torch.Tensor,
     
     return loss
 
-
-# -
-
 # Configure the optimizer over the q agent
 def setup_optimizer(cfg, q_agent):
     optimizer_args = get_arguments(cfg.optimizer)
@@ -376,13 +280,6 @@ def setup_optimizer(cfg, q_agent):
     optimizer = get_class(cfg.optimizer)(parameters, **optimizer_args)
     return optimizer
 
-
-# +
-#bit messy here but ill fix it later
-#creating the dqn agent
-pre_processing_agent = PreProcessingAgent()
-cnn_agent = CNNAgent()
-workspace = Workspace()
 
 def get_env_agents(cfg):
     #print(cfg.algorithm.n_envs)
@@ -394,6 +291,9 @@ def get_env_agents(cfg):
     return train_env_agent, eval_env_agent
 
 def create_dqn_agent(cfg, train_env_agent, eval_env_agent):
+    pre_processing_agent = PreProcessingAgent()
+    cnn_agent = CNNAgent()
+
     attribute_access_train = AttributeAccessAgent(train_env_agent, pre_processing_agent, cnn_agent)
     attribute_access_eval = AttributeAccessAgent(eval_env_agent, pre_processing_agent, cnn_agent)
 
@@ -495,6 +395,111 @@ def run_dqn(cfg):
                 
     return train_agent, eval_agent, q_agent
 
+# a test avec celui la, voir si ca marche
+def run_best_dqn(cfg, compute_critic_loss):
+    # 1)  Build the  logger
+    logger = Logger(cfg)
+    best_reward = float('-inf')
+
+    # 2) Create the environment agents
+    train_env_agent, eval_env_agent = get_env_agents(cfg)
+
+    # 3) Create the DQN-like Agent
+    train_agent, eval_agent, q_agent, target_q_agent = create_dqn_agent(
+        cfg, train_env_agent, eval_env_agent
+    )
+
+    # 5) Configure the workspace to the right dimension
+    # Note that no parameter is needed to create the workspace.
+    # In the training loop, calling the agent() and critic_agent()
+    # will take the workspace as parameter
+    train_workspace = Workspace()  # Used for training
+    rb = ReplayBuffer(max_size=cfg.algorithm.buffer_size)
+
+    # 6) Configure the optimizer over the dqn agent
+    optimizer = setup_optimizer(cfg, q_agent)
+    nb_steps = 0
+    last_eval_step = 0
+    last_critic_update_step = 0
+    best_agent = eval_agent.agent.agents[1]
+
+    # 7) Training loop
+    pbar = tqdm(range(cfg.algorithm.max_epochs))
+    for epoch in pbar:
+        # Execute the agent in the workspace
+        if epoch > 0:
+            train_workspace.zero_grad()
+            train_workspace.copy_n_last_steps(1)
+            train_agent(
+                train_workspace, t=1, n_steps=cfg.algorithm.n_steps, stochastic=True
+            )
+        else:
+            train_agent(
+                train_workspace, t=0, n_steps=cfg.algorithm.n_steps, stochastic=True
+            )
+
+        # Get the transitions
+        transition_workspace = train_workspace.get_transitions()
+
+        action = transition_workspace["action"]
+        nb_steps += action[0].shape[0]
+        
+        # Adds the transitions to the workspace
+        rb.put(transition_workspace)
+        if rb.size() > cfg.algorithm.learning_starts:
+            for _ in range(cfg.algorithm.n_updates):
+                rb_workspace = rb.get_shuffled(cfg.algorithm.batch_size)
+
+                # The q agent needs to be executed on the rb_workspace workspace (gradients are removed in workspace)
+                q_agent(rb_workspace, t=0, n_steps=2, choose_action=False)
+                q_values, terminated, reward, action = rb_workspace[
+                    "q_values", "env/terminated", "env/reward", "action"
+                ]
+
+                with torch.no_grad():
+                    target_q_agent(rb_workspace, t=0, n_steps=2, stochastic=True)
+                target_q_values = rb_workspace["q_values"]
+
+                # Determines whether values of the critic should be propagated
+                must_bootstrap = ~terminated[1]
+
+                # Compute critic loss
+                # FIXME: homogénéiser les notations (soit tranche temporelle, soit rien)
+                critic_loss = compute_critic_loss(
+                    cfg, reward, must_bootstrap, q_values, target_q_values[1], action
+                )
+                # Store the loss for tensorboard display
+                logger.add_log("critic_loss", critic_loss, nb_steps)
+
+                optimizer.zero_grad()
+                critic_loss.backward()
+                torch.nn.utils.clip_grad_norm_(q_agent.parameters(), cfg.algorithm.max_grad_norm)
+                optimizer.step()
+                if nb_steps - last_critic_update_step > cfg.algorithm.target_critic_update:
+                    last_critic_update_step = nb_steps
+                    target_q_agent.agent = copy.deepcopy(q_agent.agent)
+
+        # Evaluate the current policy
+        if nb_steps - last_eval_step > cfg.algorithm.eval_interval:
+            last_eval_step = nb_steps
+            eval_workspace = Workspace()
+            eval_agent(
+                eval_workspace, t=0, stop_variable="env/done", choose_action=True
+            )
+            rewards = eval_workspace["env/cumulated_reward"][-1]
+            mean = rewards.mean()
+            logger.log_reward_losses(rewards, nb_steps)
+            pbar.set_description(f"nb steps: {nb_steps}, reward: {mean:.3f}")
+            if cfg.save_best and mean > best_reward:
+                best_reward = mean
+                best_agent = copy.deepcopy(eval_agent.agent.agents[1])
+                directory = "./dqn_critic/"
+                if not os.path.exists(directory):
+                    os.makedirs(directory)
+                filename = directory + "dqn0_" + str(mean.item()) + ".agt"
+                eval_agent.save_model(filename)
+
+    return best_agent
 
 params={
   "save_best": False,
@@ -539,22 +544,18 @@ print(f"Launch tensorboard from the shell:\n{osp.dirname(sys.executable)}/tensor
 
 cfg=OmegaConf.create(params)
 torch.manual_seed(cfg.algorithm.seed)
-train_agent, eval_agent, q_agent = run_dqn(cfg)
+#train_agent, eval_agent, q_agent = run_dqn(cfg)
 
-'''
-cfg=OmegaConf.create(params)
-torch.manual_seed(cfg.algorithm.seed)
+print('Looking for best agent')
+best_agent = run_best_dqn(cfg, compute_critic_loss)
 
-workspace = Workspace()
-print(workspace.variables)
-workspace.set('env/images', 0, torch.tensor((1,2)))
-print(workspace['env/images'])
-env_agent = ParallelGymAgent(partial(make_env, cfg.gym_env.env_name, render_mode="rgb_array", autoreset=False), cfg.algorithm.n_envs, reward_at_t=False)
+# Methode pour set une nouvelle variable dans le workspace, ici c'est juste un exemple avec un tensor 
+# workspace.set('env/images', 0, torch.tensor((1,2)))
+# print(workspace['env/images'])
+# env_agent = ParallelGymAgent(partial(make_env, cfg.gym_env.env_name, render_mode="rgb_array", autoreset=False), cfg.algorithm.n_envs, reward_at_t=False)
 
-cnnagent = CNNAgent()
-agent = RLAgent(TENSRSIZE, cfg.algorithm.architecture.hidden_size, 2)
-
-env_agent(workspace, t=0)
-print(workspace.variables)
-print(workspace)
-'''
+# Notes et Remarques:
+# -tester nouvelle fonction run_best_dqn (issu du notebook #2)
+# -sauvegarder les features et images dans le workspace plutot qu'avec un autre agent qui passe les valeurs
+# -ameliorer pre processing (implementer celui de mathis du coup)
+# -besoin de changer le cnn? (taille de l'output surtout)
