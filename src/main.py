@@ -47,6 +47,7 @@ class AttributeAccessAgent(Agent):
     
     def forward(self, t: int, **kwargs):
         # Process for each environment
+        print('Currently rendring image at time ', t)
         for env_index in range(self.env_agent.num_envs):
             image = self.env_agent.envs[env_index].render()  # Retrieve the image
             image_pre_processed = self.pre_processing_agent.preprocess(image)  # Preprocess image
@@ -54,6 +55,12 @@ class AttributeAccessAgent(Agent):
 
             features = self.cnn_agent.process_image(image_pre_processed)  # Process image to extract features
             self.list_features[env_index].append(features)
+        # MODIFIER LA STRUCTURE ICI POUR FEATURES ET IMAGES POUR ECRIRE TOUT CA DANS LE WORKSPACE
+        # comme ca apres on peut faire des .set et .get dans discreteQAgent
+        # tnsr_images = torch.tensor(self.list_images)
+        # print(tnsr_images.shape)
+        # print(tnsr_images)
+        #self.set(('env/images', t), tnsr_images)
 
     def get_features(self, t):
         #On recupere les features pour chaque env a chaque temps t
@@ -214,6 +221,9 @@ class DiscreteQAgent(Agent):
             #print('action: ', action)
             #print('action shape: ', action.size()[0])
             self.set(("action", t), action)
+            print("TIME: ", t)
+            print(self.workspace)
+            time.sleep(5)
 
 
 class EGreedyActionSelector(Agent):
@@ -512,3 +522,11 @@ video_display("videos/dqn-full.mp4")
 # -sauvegarder les features et images dans le workspace plutot qu'avec un autre agent qui passe les valeurs
 # -ameliorer pre processing -> choper plusieurs images a la suite (implementer celui de mathis du coup)
 # -besoin de changer le cnn? (taille de l'output surtout)
+# -est ce qu'on fait l'etape CNN dans le attributeAccessAgent ou dans le DiscreteQAgent?
+
+# regarder wrappers dans gymnasium pour le pre processing
+# modifier attribute access pour mettre ca dans les agents (puis dans temporal agents) donc ecrire tout dans le workspace
+
+# POUR PLUS TARD: modifier l'angle du cartpole
+
+# autre question
