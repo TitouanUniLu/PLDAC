@@ -45,6 +45,8 @@ class ImageAgent(Agent):
             processed_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)  #on mets en noir et blanc
             processed_image = cv2.resize(processed_image, (224, 224))
             images.append(torch.tensor(processed_image))
+            #plt.imshow(processed_image)
+            #plt.show()
 
             image_tensor = torch.tensor(processed_image, dtype=torch.float).unsqueeze(0).unsqueeze(0)  
             image_tensor = image_tensor / 255.0   #petite normalisation
@@ -393,10 +395,19 @@ new_params={
 import sys
 import os
 import os.path as osp
+import gymnasium
+from gymnasium import register
 
 path = os.getcwd()
 print(f"Launch tensorboard from the shell:\n{osp.dirname(sys.executable)}/tensorboard --logdir={path}/tblogs")
 
+cartpole_spec = gymnasium.spec("CartPole-v1")
+register(
+    id="CartPole-v1",
+    entry_point="cartpole:CartPoleEnv",
+    max_episode_steps=cartpole_spec.max_episode_steps,
+    reward_threshold=cartpole_spec.reward_threshold,
+)
 cfg=OmegaConf.create(new_params)
 torch.manual_seed(cfg.algorithm.seed)
 
@@ -407,21 +418,6 @@ env = make_env(cfg.gym_env.env_name, render_mode="rgb_array")
 record_video(env, best_agent, "videos/dqn-full.mp4")
 video_display("videos/dqn-full.mp4")
 
-# Methode pour set une nouvelle variable dans le workspace, ici c'est juste un exemple avec un tensor 
-# workspace.set('env/images', 0, torch.tensor((1,2)))
-# print(workspace['env/images'])
-# env_agent = ParallelGymAgent(partial(make_env, cfg.gym_env.env_name, render_mode="rgb_array", autoreset=False), cfg.algorithm.n_envs, reward_at_t=False)
-
 # Notes et Remarques:
-# -tester nouvelle fonction run_best_dqn (issu du notebook #2)
-# -sauvegarder les features et images dans le workspace plutot qu'avec un autre agent qui passe les valeurs
 # -ameliorer pre processing -> choper plusieurs images a la suite (implementer celui de mathis du coup)
 # -besoin de changer le cnn? (taille de l'output surtout)
-# -est ce qu'on fait l'etape CNN dans le attributeAccessAgent ou dans le DiscreteQAgent?
-
-# regarder wrappers dans gymnasium pour le pre processing
-# modifier attribute access pour mettre ca dans les agents (puis dans temporal agents) donc ecrire tout dans le workspace
-
-# POUR PLUS TARD: modifier l'angle du cartpole
-
-# autre question
