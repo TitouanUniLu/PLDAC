@@ -29,67 +29,40 @@ from bbrl.agents.gymnasium import make_env, GymAgent, ParallelGymAgent
 from bbrl import instantiate_class
 
 
-#un des agents les plus importants:
-#on utilise le ParallelGymAgent pour obtenir l'environment d'un agent puis on extrait les informations
-#notamment l'image du cartpole a chaque temps t
-#avec cette image, on la preprocess et on la passe dans un cnn (defini plus bas)
-class AttributeAccessAgent(Agent):
-    def __init__(self, env_agent, pre_processing_agent, cnn_agent):
+class ImageAgent(Agent):
+    def __init__(self, env_agent):
         super().__init__()
-        #les agents
-        self.env_agent = env_agent  # ParallelGymAgent
-        self.pre_processing_agent = pre_processing_agent
-        self.cnn_agent = cnn_agent
-        #init de la liste de listes pour store les images
-        self.list_images = [[] for _ in range(self.env_agent.num_envs)]
-        self.list_features = [[] for _ in range(self.env_agent.num_envs)]
-        #print('env size: ', self.env_agent.num_envs)
+        self.env_agent = env_agent
+        self.cnn = CNN()  
     
     def forward(self, t: int, **kwargs):
-        # Process for each environment
-        print('Currently rendring image at time ', t)
+        images = []
+        features = []
         for env_index in range(self.env_agent.num_envs):
-            image = self.env_agent.envs[env_index].render()  # Retrieve the image
-            image_pre_processed = self.pre_processing_agent.preprocess(image)  # Preprocess image
-            self.list_images[env_index].append(image_pre_processed)  # Store preprocessed image
+            # Récupérer l'image rendue
+            image = self.env_agent.envs[env_index].render()
+            #temporary preprocessing wont be needed probably
+            processed_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)  #on mets en noir et blanc
+            processed_image = cv2.resize(processed_image, (224, 224))
+            images.append(torch.tensor(processed_image))
 
-            features = self.cnn_agent.process_image(image_pre_processed)  # Process image to extract features
-            self.list_features[env_index].append(features)
-        # MODIFIER LA STRUCTURE ICI POUR FEATURES ET IMAGES POUR ECRIRE TOUT CA DANS LE WORKSPACE
-        # comme ca apres on peut faire des .set et .get dans discreteQAgent
-        # tnsr_images = torch.tensor(self.list_images)
-        # print(tnsr_images.shape)
-        # print(tnsr_images)
-        #self.set(('env/images', t), tnsr_images)
+            image_tensor = torch.tensor(processed_image, dtype=torch.float).unsqueeze(0).unsqueeze(0)  
+            image_tensor = image_tensor / 255.0   #petite normalisation
 
-    def get_features(self, t):
-        #On recupere les features pour chaque env a chaque temps t
-        if t < len(self.list_features[0]):
-            features = [self.list_features[env_index][t] for env_index in range(self.env_agent.num_envs)]
-            # batch
-            features_batch = torch.stack(features)
-            # print(features_batch.shape)
-            # print('Adding features to workspace at time ', t)            
-            features = features_batch.squeeze(1)
-            
-            return features
-        else:
-            print(f"Features for timestep {t} pas dispo")
-            return None
-
-
-# agent pour gerer le preprocessing, rien de trop particulier
-# on pourrait faire du preprocessing plus complexe si jamais on obtient des mauvais resultats
-# faudrait reprendre celui de Mathis pour aller plus vite
-# faudra aussi modifier la classe pour gerer plusieurs images (3 ou 4 d'un coup)
-class PreProcessingAgent(Agent):
-    def __init__(self):
-        super().__init__()
-
-    def preprocess(self, image):
-        processed_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)  #on mets en noir et blanc
-        processed_image = cv2.resize(processed_image, (224, 224))  #on rescale 
-        return processed_image #image de taille (224, 224)
+            with torch.no_grad(): #on calcule pas le gradient (a voir si on le fait apres)
+                feature = self.cnn(image_tensor)
+            feature = feature.cpu().numpy()
+            features.append(torch.tensor(feature))
+        
+        # Empiler toutes les images et les features dans des tensors
+        features_tensor = torch.stack(features).squeeze(1)
+        images_tensor = torch.stack(images)
+        
+        #ATTENTION: ON NE PEUT PAS STOCKER LES IMAGES DANS LE WORKSPACE ACTUELLEMENT, CA PRENDS BCP TROP DE PLACE
+        #SI ON VEUT AJOUTER ON A UNE ERREUR -> RuntimeError: [enforce fail at alloc_cpu.cpp:114] data. DefaultCPUAllocator: not enough memory
+        #self.set(("env/images", t), images_tensor) 
+        # Ajouter les tensors dans le workspace
+        self.set(("env/features", t), features_tensor)
 
 
 #modele CNN: c'est une implementation plutot basqiue de cnn, truc classique qu'on trouve sur internet
@@ -141,26 +114,6 @@ class CNN(nn.Module):
         return x
 
 
-
-# l'agent cnn qui implemente le modele cnn defini en haut
-class CNNAgent(Agent):
-    def __init__(self):
-        super().__init__()
-        self.cnn = CNN() #le cnn
-
-    def process_image(self, image):
-        #on converti l'image (preprocessed) en un tensor qu'on peut mettre dans le cnn
-        #taille [1, 1, 224, 224], batch_size, channels, height, width
-        image_tensor = torch.tensor(image, dtype=torch.float).unsqueeze(0).unsqueeze(0)  
-        image_tensor = image_tensor / 255.0   #petite normalisation
-
-        with torch.no_grad(): #on calcule pas le gradient (a voir si on le fait apres)
-            features = self.cnn(image_tensor)
-        features = features.cpu().numpy()
-        return torch.tensor(features) #on renvoie le vecteur
-
-
-
 #petite fonction pour afficher toutes les etapes d'une execution d'un agent dans un environement
 def displayImagesPerAgent(images_per_agent):
     n_cols = 4  # nb de colonnes avec des images a afficher
@@ -196,34 +149,22 @@ def build_mlp(sizes, activation, output_activation=nn.Identity()):
 
 
 class DiscreteQAgent(Agent):
-    def __init__(self, input_dim, hidden_layers, action_dim, attribute_access_agent):
+    def __init__(self, input_dim, hidden_layers, action_dim):
         super().__init__()
         self.model = build_mlp(
             [input_dim] + list(hidden_layers) + [action_dim], 
             activation=nn.ReLU()
         )
-        self.attribute_access_agent = attribute_access_agent
-        #print('num envs discreteqagent: ', self.attribute_access_agent.env_agent.num_envs)
-        #print(self.attribute_access_agent)
 
     def forward(self, t: int, choose_action=True, **kwargs):
-        # Retrieve the current feature vector for time step t from AttributeAccessAgent
-        current_features = self.attribute_access_agent.get_features(t)
-        self.set(('env/features', t), current_features)
-        #print("obs ", current_features)
+        current_features = self.get(('env/features',t))
         
         q_values = self.model(current_features)
         self.set(("q_values", t), q_values)
-        #print('q values: ', q_values)
 
         if choose_action:
             action = q_values.argmax(dim=1)
-            #print('action: ', action)
-            #print('action shape: ', action.size()[0])
             self.set(("action", t), action)
-            print("TIME: ", t)
-            print(self.workspace)
-            time.sleep(5)
 
 
 class EGreedyActionSelector(Agent):
@@ -233,19 +174,14 @@ class EGreedyActionSelector(Agent):
 
     def forward(self, t: int, **kwargs):
         q_values = self.get(("q_values", t))
-        #print(q_values)
-        #print(q_values.size())
         size, nb_actions = q_values.size()
 
-        # Flag 
         is_random = torch.rand(size).lt(self.epsilon).float()
         random_action = torch.randint(low=0, high=nb_actions, size=(size,))
         max_action = q_values.max(1)[1]
 
-        # Choose the action based on the is_random flag
         action = is_random * random_action + (1 - is_random) * max_action
 
-        # Sets the action at time t
         self.set(("action", t), action.long())
         self.epsilon = max(0.001, self.epsilon * 0.995)
 
@@ -268,22 +204,10 @@ class Logger():
         self.add_log("reward/min", rewards.min(), nb_steps)
         self.add_log("reward/median", rewards.median(), nb_steps)
 
-
-# +
-# For the tensor dimensions
-# T = maximum number of time steps
-# B = number of episodes run in parallel 
-# A = state space dimension
-
 def compute_critic_loss(cfg, reward: torch.Tensor, must_bootstrap: torch.Tensor, q_values: torch.Tensor, action: torch.LongTensor):
     q_values_for_actions = q_values.gather(2, action.unsqueeze(-1)).squeeze(-1)
-    
-    # Compute the max Q-value for the next state, but not for the last timestep
     next_q_values = q_values[1:].max(dim=2)[0]
-    # Compute the expected Q-values (target) for the current state and action
     target_q_values = reward[:-1] + cfg["algorithm"]["discount_factor"] * next_q_values * must_bootstrap[:-1]
-    
-    # Compute the loss as the mean squared error between the current and target Q-values
     loss = F.mse_loss(q_values_for_actions[:-1], target_q_values)
     
     return loss
@@ -305,53 +229,24 @@ def get_env_agents(cfg):
     #print("success get_env_agents")
     return train_env_agent, eval_env_agent
 
-def create_dqn_agent(cfg, train_env_agent, eval_env_agent):
-    pre_processing_agent = PreProcessingAgent()
-    cnn_agent = CNNAgent()
-
-    attribute_access_train = AttributeAccessAgent(train_env_agent, pre_processing_agent, cnn_agent)
-    attribute_access_eval = AttributeAccessAgent(eval_env_agent, pre_processing_agent, cnn_agent)
-
-
-    critic = DiscreteQAgent(TENSRSIZE, cfg.algorithm.architecture.hidden_size, 2, attribute_access_train)
-
-    #training
-    q_agent = TemporalAgent(critic)
-    explorer = EGreedyActionSelector(cfg.algorithm.epsilon)
-    tr_agent = Agents(train_env_agent, attribute_access_train, critic, explorer)
-    train_agent = TemporalAgent(tr_agent)
-
-    #eval
-    ev_agent = Agents(eval_env_agent, attribute_access_eval, critic)
-    eval_agent = TemporalAgent(ev_agent)
-    #print("success create_dqn_agent")
-    return train_agent, eval_agent, q_agent
-
 def create_best_dqn_agent(cfg, train_env_agent, eval_env_agent):
-    pre_processing_agent = PreProcessingAgent()
-    cnn_agent = CNNAgent()
+    image_agent = ImageAgent(train_env_agent)
 
-    attribute_access_train = AttributeAccessAgent(train_env_agent, pre_processing_agent, cnn_agent)
-    attribute_access_eval = AttributeAccessAgent(eval_env_agent, pre_processing_agent, cnn_agent)
-
-
-    critic = DiscreteQAgent(TENSRSIZE, cfg.algorithm.architecture.hidden_size, 2, attribute_access_train)
+    critic = DiscreteQAgent(TENSRSIZE, cfg.algorithm.architecture.hidden_size, 2)
     target_critic = copy.deepcopy(critic)
     target_q_agent = TemporalAgent(target_critic)
 
     #training
     q_agent = TemporalAgent(critic)
     explorer = EGreedyActionSelector(cfg.algorithm.epsilon)
-    tr_agent = Agents(train_env_agent, attribute_access_train, critic, explorer)
+    tr_agent = Agents(train_env_agent, image_agent, critic, explorer)
     train_agent = TemporalAgent(tr_agent)
 
     #eval
-    ev_agent = Agents(eval_env_agent, attribute_access_eval, critic)
+    ev_agent = Agents(eval_env_agent, image_agent, critic)
     eval_agent = TemporalAgent(ev_agent)
-    #print("success create_dqn_agent")
     return train_agent, eval_agent, q_agent, target_q_agent
 
-# a test avec celui la, voir si ca marche
 def run_best_dqn(cfg, compute_critic_loss):
     # 1)  Build the  logger
     logger = Logger(cfg)
