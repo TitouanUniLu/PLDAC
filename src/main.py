@@ -12,6 +12,7 @@ from omegaconf import OmegaConf
 import copy
 import matplotlib.pyplot as plt
 import cv2
+import numpy as np
 
 # Torch imports
 import torch
@@ -33,88 +34,82 @@ class ImageAgent(Agent):
     def __init__(self, env_agent):
         super().__init__()
         self.env_agent = env_agent
-        self.cnn = CNN()  
+        self.cnn = SimpleCNN()  
+        self.image_buffer = [[torch.zeros(84, 84) for _ in range(4)] for _ in range(self.env_agent.num_envs)]
     
     def forward(self, t: int, **kwargs):
         images = []
         features = []
+
         for env_index in range(self.env_agent.num_envs):
-            # Récupérer l'image rendue
+            
             image = self.env_agent.envs[env_index].render()
-            #temporary preprocessing wont be needed probably
-            processed_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)  #on mets en noir et blanc
-            processed_image = cv2.resize(processed_image, (224, 224))
-            images.append(torch.tensor(processed_image))
-            #plt.imshow(processed_image)
-            #plt.show()
 
-            image_tensor = torch.tensor(processed_image, dtype=torch.float).unsqueeze(0).unsqueeze(0)  
-            image_tensor = image_tensor / 255.0   #petite normalisation
+            # Temporary preprocessing (convert to grayscale and resize)
+            processed_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+            processed_image = cv2.resize(processed_image, (84, 84))  # Resize to match CNN input size
 
-            with torch.no_grad(): #on calcule pas le gradient (a voir si on le fait apres)
-                feature = self.cnn(image_tensor)
-            feature = feature.cpu().numpy()
-            features.append(torch.tensor(feature))
-        
-        # Empiler toutes les images et les features dans des tensors
-        features_tensor = torch.stack(features).squeeze(1)
-        images_tensor = torch.stack(images)
-        
-        #ATTENTION: ON NE PEUT PAS STOCKER LES IMAGES DANS LE WORKSPACE ACTUELLEMENT, CA PRENDS BCP TROP DE PLACE
-        #SI ON VEUT AJOUTER ON A UNE ERREUR -> RuntimeError: [enforce fail at alloc_cpu.cpp:114] data. DefaultCPUAllocator: not enough memory
-        #self.set(("env/images", t), images_tensor) 
-        # Ajouter les tensors dans le workspace
+            processed_image_tensor = torch.tensor(processed_image, dtype=float)
+
+            self.image_buffer[env_index].pop(0)
+            self.image_buffer[env_index].append(processed_image_tensor)
+
+            #if env_index == 0:
+                #print(self.image_buffer[env_index])
+                #print(len(self.image_buffer[env_index]))
+                #print(processed_image_tensor)
+                #print(processed_image_tensor.shape)
+            
+            stacked_frames = np.stack(self.image_buffer[env_index], axis=0)
+    
+            # Convert the numpy array to a PyTorch tensor and add a batch dimension
+            # Also ensure the data type matches what PyTorch expects (float32 by default for CNNs)
+            # Normalize the tensor to have values between 0 and 1 if it's not already done
+            input_tensor = torch.tensor(stacked_frames, dtype=torch.float32).unsqueeze(0) / 255.0
+
+            # Check if the input_tensor shape is [1, 4, 84, 84], where 1 is the batch size
+            assert input_tensor.shape == (1, 4, 84, 84), f"Expected input_tensor shape to be [1, 4, 84, 84], got {input_tensor.shape}"
+
+            self.cnn.eval()  # Comment out if you are in a training loop and the model is already in training mode
+            with torch.no_grad():
+                cnn_output = self.cnn(input_tensor)
+
+            features.append(cnn_output.squeeze(0))
+        features_tensor = torch.stack(features)
+
         self.set(("env/features", t), features_tensor)
 
 
-#modele CNN: c'est une implementation plutot basqiue de cnn, truc classique qu'on trouve sur internet
-#on fait avec 5 layers pcq a priori ca devrait suffire
-#c'est possible qu'on ai un probleme ici a cause d'une grosse perte d'information (meme apres 100k pas la reward change pas)
 TENSRSIZE = 32
-class CNN(nn.Module):
+class SimpleCNN(nn.Module):
     def __init__(self):
-        super(CNN, self).__init__()
-        self.conv_layers = nn.Sequential(
-            #layer 1
-            nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 16 x 112 x 112
-            
-            #layer 2
-            nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 32 x 56 x 56
-            
-            #layer 3
-            nn.Conv2d(in_channels=32, out_channels=64, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 64 x 28 x 28
-            
-            #layer 4
-            nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 128 x 14 x 14
-            
-            #layer 5
-            nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),  # Output: 256 x 7 x 7
-        )
+        super(SimpleCNN, self).__init__()
+        # Assuming the input images are grayscale, thus 1 channel
+        # If they are colored images, you should change 1 to 3
+        # Convolutional layer (sees 4x84x84 image tensor)
+        self.conv1 = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=8, stride=4)
+        # Convolutional layer (sees 20x20x16 tensor after pooling)
+        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2)
+        # Fully connected layer (sees 9x9x32 tensor after pooling)
+        self.fc1 = nn.Linear(in_features=32 * 9 * 9, out_features=256)
+        # Output layer
+        self.out = nn.Linear(in_features=256, out_features=32)
+        # Max pooling layer
+        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
         
-        self.fc_layers = nn.Sequential( #on cherche a avoir un vecteur de taille TENSRSIZE (une ligne)
-            nn.Flatten(),
-            nn.Linear(256 * 7 * 7, 512),
-            nn.ReLU(),
-            nn.Linear(512, 256),
-            nn.ReLU(),
-            nn.Linear(256, TENSRSIZE),  
-        )
-        
-    def forward(self, x): #ici c'est l'image qui a ete converti en tensor
-        x = self.conv_layers(x)
-        x = self.fc_layers(x)
+    def forward(self, x):
+        # Add sequence of convolutional and max pooling layers
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        # Flatten image input
+        x = x.view(-1, 32 * 9 * 9)
+        # Add dropout layer
+        x = F.dropout(x, p=0.5, training=self.training)
+        # Add 1st hidden layer, with relu activation function
+        x = F.relu(self.fc1(x))
+        # Add output layer
+        x = self.out(x)
         return x
-
 
 #petite fonction pour afficher toutes les etapes d'une execution d'un agent dans un environement
 def displayImagesPerAgent(images_per_agent):
@@ -160,12 +155,16 @@ class DiscreteQAgent(Agent):
 
     def forward(self, t: int, choose_action=True, **kwargs):
         current_features = self.get(('env/features',t))
+        #print('features', current_features)
+        #print(current_features.shape)
         
         q_values = self.model(current_features)
         self.set(("q_values", t), q_values)
 
         if choose_action:
             action = q_values.argmax(dim=1)
+            #print('action', action)
+            #print(action.shape)
             self.set(("action", t), action)
 
 
@@ -292,7 +291,9 @@ def run_best_dqn(cfg, compute_critic_loss):
             )
 
         # Get the transitions
+        
         transition_workspace = train_workspace.get_transitions()
+        #print(transition_workspace)
 
         action = transition_workspace["action"]
         nb_steps += action[0].shape[0]
@@ -300,6 +301,7 @@ def run_best_dqn(cfg, compute_critic_loss):
         # Adds the transitions to the workspace
         rb.put(transition_workspace)
         if rb.size() > cfg.algorithm.learning_starts:
+            print('test 1')
             for _ in range(cfg.algorithm.n_updates):
                 rb_workspace = rb.get_shuffled(cfg.algorithm.batch_size)
 
@@ -334,6 +336,7 @@ def run_best_dqn(cfg, compute_critic_loss):
 
         # Evaluate the current policy
         if nb_steps - last_eval_step > cfg.algorithm.eval_interval:
+            print('test 2')
             last_eval_step = nb_steps
             eval_workspace = Workspace()
             eval_agent(
@@ -344,6 +347,7 @@ def run_best_dqn(cfg, compute_critic_loss):
             logger.log_reward_losses(rewards, nb_steps)
             pbar.set_description(f"nb steps: {nb_steps}, reward: {mean:.3f}")
             if cfg.save_best and mean > best_reward:
+                print('test 3')
                 best_reward = mean
                 best_agent = copy.deepcopy(eval_agent.agent.agents[1])
                 directory = "./dqn_critic/"
@@ -355,10 +359,10 @@ def run_best_dqn(cfg, compute_critic_loss):
     return best_agent
 
 new_params={
-  "save_best": False,
+  "save_best": True,
   "logger":{
     "classname": "bbrl.utils.logger.TFLogger",
-    "log_dir": "../tblogs/dqn-buffer-" + str(time.time()),
+    "log_dir": "./tblogs/best_agent-" + str(time.time()),
     "cache_size": 10000,
     "every_n_seconds": 10,
     "verbose": False,    
@@ -398,9 +402,6 @@ import os.path as osp
 import gymnasium
 from gymnasium import register
 
-path = os.getcwd()
-print(f"Launch tensorboard from the shell:\n{osp.dirname(sys.executable)}/tensorboard --logdir={path}/tblogs")
-
 cartpole_spec = gymnasium.spec("CartPole-v1")
 register(
     id="CartPole-v1",
@@ -414,10 +415,8 @@ torch.manual_seed(cfg.algorithm.seed)
 print('Looking for best agent')
 best_agent = run_best_dqn(cfg, compute_critic_loss)
 
+'''
 env = make_env(cfg.gym_env.env_name, render_mode="rgb_array")
 record_video(env, best_agent, "videos/dqn-full.mp4")
 video_display("videos/dqn-full.mp4")
-
-# Notes et Remarques:
-# -ameliorer pre processing -> choper plusieurs images a la suite (implementer celui de mathis du coup)
-# -besoin de changer le cnn? (taille de l'output surtout)
+'''
