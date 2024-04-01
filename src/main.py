@@ -267,6 +267,7 @@ def run_best_dqn(cfg, compute_critic_loss):
     # In the training loop, calling the agent() and critic_agent()
     # will take the workspace as parameter
     train_workspace = Workspace()  # Used for training
+    print(train_workspace)
     rb = ReplayBuffer(max_size=cfg.algorithm.buffer_size)
 
     # 6) Configure the optimizer over the dqn agent
@@ -294,13 +295,15 @@ def run_best_dqn(cfg, compute_critic_loss):
         # Get the transitions
         
         transition_workspace = train_workspace.get_transitions()
-        #print(transition_workspace)
-
+        print(transition_workspace)
+        #print(Workspace.get(('env/features', epoch)))
         action = transition_workspace["action"]
         nb_steps += action[0].shape[0]
         
         # Adds the transitions to the workspace
         rb.put(transition_workspace)
+        print(rb.size())
+        time.sleep(5)
         if rb.size() > cfg.algorithm.learning_starts:
             print('test 1')
             for _ in range(cfg.algorithm.n_updates):
