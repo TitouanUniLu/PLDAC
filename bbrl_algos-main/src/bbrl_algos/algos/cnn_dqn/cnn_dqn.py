@@ -43,36 +43,22 @@ class ImageAgent(Agent):
         features = []
 
         for env_index in range(self.env_agent.num_envs):
-
             image = self.env_agent.envs[env_index].render()
-
-            # Temporary preprocessing (convert to grayscale and resize)
             processed_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
             processed_image = cv2.resize(
                 processed_image, (84, 84)
-            )  # Resize to match CNN input size
+            )  
 
             processed_image_tensor = torch.tensor(processed_image, dtype=float)
 
             self.image_buffer[env_index].pop(0)
             self.image_buffer[env_index].append(processed_image_tensor)
 
-            # if env_index == 0:
-            # print(self.image_buffer[env_index])
-            # print(len(self.image_buffer[env_index]))
-            # print(processed_image_tensor)
-            # print(processed_image_tensor.shape)
-
             stacked_frames = np.stack(self.image_buffer[env_index], axis=0)
-
-            # Convert the numpy array to a PyTorch tensor and add a batch dimension
-            # Also ensure the data type matches what PyTorch expects (float32 by default for CNNs)
-            # Normalize the tensor to have values between 0 and 1 if it's not already done
             input_tensor = (
                 torch.tensor(stacked_frames, dtype=torch.float32).unsqueeze(0) / 255.0
             )
 
-            # Check if the input_tensor shape is [1, 4, 84, 84], where 1 is the batch size
             assert input_tensor.shape == (
                 1,
                 4,
@@ -80,7 +66,7 @@ class ImageAgent(Agent):
                 84,
             ), f"Expected input_tensor shape to be [1, 4, 84, 84], got {input_tensor.shape}"
 
-            self.cnn.eval()  # Comment out if you are in a training loop and the model is already in training mode
+            self.cnn.eval()  
             with torch.no_grad():
                 cnn_output = self.cnn(input_tensor)
 
@@ -91,61 +77,24 @@ class ImageAgent(Agent):
 
 
 TENSRSIZE = 32
-
-
 class SimpleCNN(nn.Module):
     def __init__(self):
         super(SimpleCNN, self).__init__()
-        # Assuming the input images are grayscale, thus 1 channel
-        # If they are colored images, you should change 1 to 3
-        # Convolutional layer (sees 4x84x84 image tensor)
+
         self.conv1 = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=8, stride=4)
-        # Convolutional layer (sees 20x20x16 tensor after pooling)
         self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2)
-        # Fully connected layer (sees 9x9x32 tensor after pooling)
         self.fc1 = nn.Linear(in_features=32 * 9 * 9, out_features=256)
-        # Output layer
         self.out = nn.Linear(in_features=256, out_features=32)
-        # Max pooling layer
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
     def forward(self, x):
-        # Add sequence of convolutional and max pooling layers
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
-        # Flatten image input
         x = x.view(-1, 32 * 9 * 9)
-        # Add dropout layer
         x = F.dropout(x, p=0.5, training=self.training)
-        # Add 1st hidden layer, with relu activation function
         x = F.relu(self.fc1(x))
-        # Add output layer
         x = self.out(x)
         return x
-
-
-# petite fonction pour afficher toutes les etapes d'une execution d'un agent dans un environement
-def displayImagesPerAgent(images_per_agent):
-    n_cols = 4  # nb de colonnes avec des images a afficher
-
-    for env_index, images in enumerate(images_per_agent):
-        print(f"Environment {env_index + 1}:")
-        n_images = len(images)
-        n_rows = (n_images + n_cols - 1) // n_cols  # nb de lignes
-
-        # trucs a changer pour l'affichage mais pas beosin d'y toucher je pense
-        figsize_width = 10
-        figsize_height = n_rows * (figsize_width / n_cols) * 0.5
-        plt.figure(figsize=(figsize_width, figsize_height))
-
-        for i, image in enumerate(images):
-            plt.subplot(n_rows, n_cols, i + 1)
-            plt.imshow(image)
-            plt.axis("off")
-
-        plt.tight_layout()
-        plt.show()
-
 
 def build_mlp(sizes, activation, output_activation=nn.Identity()):
     layers = []
@@ -153,10 +102,6 @@ def build_mlp(sizes, activation, output_activation=nn.Identity()):
         act = activation if j < len(sizes) - 2 else output_activation
         layers += [nn.Linear(sizes[j], sizes[j + 1]), act]
     return nn.Sequential(*layers)
-
-
-# QUAND UN BUILD LE MLP FAUT QUE sizes SOIT DU TYPE [128, 64, 2] par ex
-# ex: mlp = build_mlp(sizes=[128] + [64, 64] + [2], activation=nn.ReLU(), output_activation=nn.Identity())
 
 
 class DiscreteQAgent(Agent):
@@ -309,7 +254,6 @@ def run_best_dqn(cfg, compute_critic_loss):
     # In the training loop, calling the agent() and critic_agent()
     # will take the workspace as parameter
     train_workspace = Workspace()  # Used for training
-    print(train_workspace)
     rb = ReplayBuffer(max_size=cfg.algorithm.buffer_size)
 
     # 6) Configure the optimizer over the dqn agent
@@ -322,7 +266,6 @@ def run_best_dqn(cfg, compute_critic_loss):
     # 7) Training loop
     pbar = tqdm(range(cfg.algorithm.max_epochs))
     for epoch in pbar:
-        print(epoch)
         # Execute the agent in the workspace
         if epoch > 0:
             train_workspace.zero_grad()
@@ -344,17 +287,13 @@ def run_best_dqn(cfg, compute_critic_loss):
         # Get the transitions
 
         transition_workspace = train_workspace.get_transitions()
-        print(transition_workspace)
         # print(Workspace.get(('env/features', epoch)))
         action = transition_workspace["action"]
         nb_steps += action[0].shape[0]
 
         # Adds the transitions to the workspace
         rb.put(transition_workspace)
-        print(rb.size())
-        time.sleep(5)
         if rb.size() > cfg.algorithm.learning_starts:
-            print("test 1")
             for _ in range(cfg.algorithm.n_updates):
                 rb_workspace = rb.get_shuffled(cfg.algorithm.batch_size)
 
@@ -399,7 +338,6 @@ def run_best_dqn(cfg, compute_critic_loss):
 
         # Evaluate the current policy
         if nb_steps - last_eval_step > cfg.algorithm.eval_interval:
-            print("test 2")
             last_eval_step = nb_steps
             eval_workspace = Workspace()
             eval_agent(
