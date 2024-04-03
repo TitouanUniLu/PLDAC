@@ -280,6 +280,7 @@ def run_best_dqn(cfg, compute_critic_loss):
     # 7) Training loop
     pbar = tqdm(range(cfg.algorithm.max_epochs))
     for epoch in pbar:
+        print('eepoch',epoch)
         # Execute the agent in the workspace
         if epoch > 0:
             train_workspace.zero_grad()
