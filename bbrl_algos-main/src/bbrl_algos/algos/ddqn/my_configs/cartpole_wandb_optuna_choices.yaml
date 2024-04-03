@@ -1,0 +1,100 @@
+
+# Caution: use only the 'suggest_type' in case of using optuna
+
+log_dir: ./tmp
+video_dir: ${log_dir}/videos
+
+hydra:
+  run:
+    dir: ${log_dir}/hydra/${now:%Y-%m-%d}/${now:%H-%M-%S}
+
+# The following arguments have to be adapted if using another logger (e.g. TfLogger)
+logger:
+  classname: bbrl.utils.logger.WandbLogger
+  project: "dqn_study"
+  group: "optuna_optim"
+  tags: "hp_dqn"
+  job_type: test
+  log_dir: ${log_dir}
+  cache_size: 10000
+  every_n_seconds: 10
+  verbose: False
+
+env:
+  identifier: CartPole-v1
+  render_mode: rgb_array
+  name: env
+
+gym_env_train:
+  classname: __main__.make_env
+  identifier: ${env.identifier}
+  render_mode: ${env.render_mode}
+  autoreset: True
+
+gym_env_eval:
+  classname: __main__.make_env
+  identifier: ${env.identifier}
+  render_mode: ${env.render_mode}
+  autoreset: False
+
+algorithm:
+  architecture:
+    hidden_sizes: 
+    suggest_type: choices
+      - [64, 64]
+      - [128, 128]
+      - [20, 20]
+
+  seed:
+    train: 335
+    eval: 983
+    q: 123
+    explorer: 456
+    torch: 789
+
+  explorer:
+    epsilon_start: 0.7
+    epsilon_end: 0.2
+    decay: 0.999
+
+  buffer:
+    max_size:
+      suggest_type: choices
+        - 50000
+        - 10000
+        - 100000
+    batch_size: 256
+    learning_starts:
+        suggest_type: choices
+          - 1000
+          - 5000
+
+  target_critic_update_interval: 5000
+  max_grad_norm: 0.5
+
+  n_envs_eval: 10
+  n_envs_train: 1
+  n_steps_train: 50
+
+  optim_n_updates:
+    suggest_type: choices
+      - 1
+      - 3
+      - 4
+      - 6
+  discount_factor:
+    suggest_type: choices
+      - 0.9
+      - 0.99
+      - 0.999
+
+  n_steps: 70_000
+  eval_interval: 1000
+
+
+optimizer:
+  classname: torch.optim.Adam
+  lr: 
+    suggest_type: choices
+      - 5e-4
+      - 1e-3

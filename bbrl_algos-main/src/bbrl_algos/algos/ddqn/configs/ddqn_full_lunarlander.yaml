@@ -1,0 +1,37 @@
+    save_best: True
+    plot_agents: True
+
+    logger:
+      classname: bbrl.utils.logger.TFLogger
+      log_dir: ./ddqn_full_logs/
+      verbose: False
+      every_n_seconds: 10
+
+    algorithm:
+      seed: 1
+      nb_seeds: 1
+      epsilon_init: 1.0
+      epsilon_decay: 0.995
+      epsilon_end: 0.02
+      buffer_size: 1e5
+      max_grad_norm: 0.5
+      n_envs: 1
+      n_steps: 512
+      n_updates: 512
+      batch_size: 64
+      eval_interval: 3000
+      learning_starts: 10000
+      target_critic_update: 5000
+      nb_evals: 10
+      max_epochs: 4000
+      discount_factor: 0.99
+      architecture:
+        hidden_size: [125, 100]
+
+    gym_env:
+      classname: __main__.make_gym_env
+      env_name: LunarLander-v2
+
+    optimizer:
+      classname: torch.optim.Adam
+      lr: 2e-4

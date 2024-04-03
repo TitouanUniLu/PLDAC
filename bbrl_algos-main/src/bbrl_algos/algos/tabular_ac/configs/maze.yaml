@@ -1,0 +1,8 @@
+
+nb_episodes: 100
+timeout: 200
+render: False
+nb_repeats: 5
+
+alpha_actor: 0.0
+alpha_critic: 0.0
