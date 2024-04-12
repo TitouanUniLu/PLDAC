@@ -4,7 +4,7 @@ Copied from http://incompleteideas.net/sutton/book/code/pole.c
 permalink: https://perma.cc/C9ZM-652R
 """
 import math
-
+from typing import Optional, Union
 import gymnasium as gym
 import numpy as np
 from gymnasium import logger, spaces
@@ -12,7 +12,7 @@ from gymnasium.envs.classic_control import utils
 from gymnasium.error import DependencyNotInstalled
 
 
-class CartPoleEnv(gym.Env[np.ndarray, int | np.ndarray]):
+class CartPoleEnv(gym.Env[np.ndarray, Union[int, np.ndarray]]):
     """
     ## Description
 
@@ -84,7 +84,7 @@ class CartPoleEnv(gym.Env[np.ndarray, int | np.ndarray]):
         "render_fps": 50,
     }
 
-    def __init__(self, render_mode: str | None = None):
+    def __init__(self, render_mode: Optional[str] = None):
         self.gravity = 9.8
         self.masscart = 1.0
         self.masspole = 0.1
@@ -188,8 +188,8 @@ class CartPoleEnv(gym.Env[np.ndarray, int | np.ndarray]):
     def reset(
         self,
         *,
-        seed: int | None = None,
-        options: dict | None = None,
+        seed: Optional[int] = None,
+        options: Optional[dict] = None,
     ):
         super().reset(seed=seed)
         # Note that if you use custom reset bounds, it may lead to out-of-bound
