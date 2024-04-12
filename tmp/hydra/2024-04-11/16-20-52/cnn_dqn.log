@@ -1,0 +1,4 @@
+[2024-04-11 16:20:56,174][numexpr.utils][INFO] - NumExpr defaulting to 8 threads.
+[2024-04-11 16:21:02,705][py.warnings][WARNING] - c:\Users\titouan\OneDrive\Bureau\SORBONNE S2\PLDAC_BBRL\bbrl_algos-main\src\bbrl_algos\algos\cnn_dqn\cnn_dqn.py:74: UserWarning: Using a target size (torch.Size([4])) that is different to the input size (torch.Size([1, 4])). This will likely lead to incorrect results due to broadcasting. Please ensure they have the same size.
+  loss = F.mse_loss(cnn_output, real_observations)  # Compute the MSE loss
+
