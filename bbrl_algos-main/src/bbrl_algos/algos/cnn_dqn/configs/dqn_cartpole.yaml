@@ -14,7 +14,7 @@ logger:
   classname: bbrl.utils.logger.TFLogger
   log_dir: ${log_dir}
   cache_size: 10000
-  every_n_seconds: 10
+  every_n_seconds: 5
   verbose: False
 
 gym_env:
@@ -23,31 +23,34 @@ gym_env:
 
 algorithm:
   architecture:
-    hidden_size: [64]
+    hidden_size: [64,64]
 
-  seed: 32
+  seed: 4
 
-  epsilon: 0.2
+  epsilon: 0.02
+  epsilon_start: 0.035
+  epsilon_end: 0.005
+  decay: 0.995
 
-  buffer_size: 150000
+  buffer_size: 1000000
   batch_size: 256
-  learning_starts: 2000
+  learning_starts: 400
 
   target_critic_update_interval: 100
   max_grad_norm: 0.5
 
   nb_evals: 10
-  n_envs: 10
+  n_envs: 5
   n_steps_train: 50
 
-  n_updates: 3
-  discount_factor: 0.9
+  n_updates: 50
+  discount_factor: 0.99
 
-  max_epochs: 300
-  n_steps: 300_000
-  eval_interval: 1000
+  max_epochs: 3500
+  n_steps: 300
+  eval_interval: 10
 
 
 optimizer:
   classname: torch.optim.Adam
-  lr: 5e-4
+  lr: 1e-3

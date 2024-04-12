@@ -68,15 +68,17 @@ class ImageAgent(Agent):
             real_observations = self.get(("env/env_obs", t))[env_index]
 
             loss = F.mse_loss(cnn_output, real_observations)  # Compute the MSE loss
-            total_loss += loss.item()
 
+            self.cnn.optimizer.zero_grad()
+            loss.backward()
+            self.cnn.optimizer.step()
+
+            total_loss += loss.item()
             features.append(cnn_output)
         # Backpropagation
-        #print(total_loss)
-        total_loss_tensor = torch.tensor(total_loss, requires_grad=True)
-        self.cnn.optimizer.zero_grad()
-        total_loss_tensor.backward()
-        self.cnn.optimizer.step()    
+        # print(f' loss at time {t}: {total_loss}')
+        # total_loss_tensor = torch.tensor(total_loss, requires_grad=True)
+            
 
         features_tensor = torch.stack(features)
         self.set(("env/features", t), features_tensor)
@@ -120,7 +122,7 @@ class DiscreteQAgent(Agent):
         )
 
     def forward(self, t: int, choose_action=True, **kwargs):
-        current_features = self.get(("env/env_obs", t)) #"env/features"
+        current_features = self.get(("env/env_obs", t)) #
         # print('features', current_features)
         # print(current_features.shape)
 
@@ -135,25 +137,30 @@ class DiscreteQAgent(Agent):
 
 
 class EGreedyActionSelector(Agent):
-    def __init__(self, epsilon):
-        super().__init__()
-        self.epsilon = epsilon
+    def __init__(self, epsilon_start, epsilon_end, epsilon_decay, **kwargs):
+        super().__init__(**kwargs)
+        self.epsilon = epsilon_start
+        self.epsilon_end = epsilon_end
+        self.epsilon_decay = epsilon_decay
 
-    def forward(self, t: int, **kwargs):
+    def decay(self):
+        self.epsilon = max(self.epsilon * self.epsilon_decay, self.epsilon_end)
+
+    def forward(self, t, **kwargs):
         q_values = self.get(("q_values", t))
-        size, nb_actions = q_values.size()
-
+        nb_actions = q_values.size()[1]
+        size = q_values.size()[0]
+        # TODO: make it deterministic if seeded
         is_random = torch.rand(size).lt(self.epsilon).float()
         random_action = torch.randint(low=0, high=nb_actions, size=(size,))
         max_action = q_values.max(1)[1]
-
         action = is_random * random_action + (1 - is_random) * max_action
+        action = action.long()
+        self.set(("action", t), action)
 
-        self.set(("action", t), action.long())
-        self.epsilon = max(0.001, self.epsilon * 0.995)
 
+class Logger():
 
-class Logger:
     def __init__(self, cfg):
         self.logger = instantiate_class(cfg.logger)
 
@@ -234,7 +241,9 @@ def create_best_dqn_agent(cfg, train_env_agent, eval_env_agent):
 
     # training
     q_agent = TemporalAgent(critic)
-    explorer = EGreedyActionSelector(cfg.algorithm.epsilon)
+    explorer = EGreedyActionSelector(epsilon_start=cfg.algorithm.epsilon_start,
+        epsilon_end=cfg.algorithm.epsilon_end,
+        epsilon_decay=cfg.algorithm.decay,)
     tr_agent = Agents(train_env_agent, image_train_agent, critic, explorer)
     train_agent = TemporalAgent(tr_agent)
 
@@ -275,6 +284,7 @@ def run_best_dqn(cfg, compute_critic_loss):
     pbar = tqdm(range(cfg.algorithm.max_epochs))
     for epoch in pbar:
         # Execute the agent in the workspace
+        train_agent.agent.agents[3].decay()
         if epoch > 0:
             train_workspace.zero_grad()
             train_workspace.copy_n_last_steps(1)
@@ -343,7 +353,6 @@ def run_best_dqn(cfg, compute_critic_loss):
                 ):
                     last_critic_update_step = nb_steps
                     target_q_agent.agent = copy.deepcopy(q_agent.agent)
-
         # Evaluate the current policy
         if nb_steps - last_eval_step > cfg.algorithm.eval_interval:
             last_eval_step = nb_steps
@@ -354,8 +363,9 @@ def run_best_dqn(cfg, compute_critic_loss):
             rewards = eval_workspace["env/cumulated_reward"][-1]
             mean = rewards.mean()
             logger.log_reward_losses(rewards, nb_steps)
-            pbar.set_description(f"nb steps: {nb_steps}, reward: {mean:.3f}")
+            pbar.set_description(f"nb steps: {nb_steps}, reward: {mean:.3f}, best reward: {best_reward}")
             if cfg.save_best and mean > best_reward:
+                #print('found new best reward', mean)
                 best_reward = mean
                 best_agent = copy.deepcopy(eval_agent.agent.agents[2])
                 directory = "./dqn_critic/"
