@@ -80,7 +80,7 @@ class ImageAgent(Agent):
         self.set(("env/features", t), features_tensor)
 
 
-TENSRSIZE = 32
+TENSRSIZE = 4
 class SimpleCNN(nn.Module):
     def __init__(self):
         super(SimpleCNN, self).__init__()
@@ -154,7 +154,7 @@ class DiscreteQAgent(Agent):
         )
 
     def forward(self, t: int, choose_action=True, **kwargs):
-        current_features = self.get(('env/features',t))
+        current_features = self.get(('env/env_obs',t))
         #print('features', current_features)
         #print(current_features.shape)
         
@@ -205,13 +205,17 @@ class Logger():
         self.add_log("reward/min", rewards.min(), nb_steps)
         self.add_log("reward/median", rewards.median(), nb_steps)
 
-def compute_critic_loss(cfg, reward: torch.Tensor, must_bootstrap: torch.Tensor, q_values: torch.Tensor, action: torch.LongTensor):
-    q_values_for_actions = q_values.gather(2, action.unsqueeze(-1)).squeeze(-1)
-    next_q_values = q_values[1:].max(dim=2)[0]
-    target_q_values = reward[:-1] + cfg["algorithm"]["discount_factor"] * next_q_values * must_bootstrap[:-1]
-    loss = F.mse_loss(q_values_for_actions[:-1], target_q_values)
-    
-    return loss
+def compute_critic_loss(
+    discount_factor, reward, must_bootstrap, action, q_values, q_target=None
+):
+    if q_target is None:
+        q_target = q_values
+    max_q = q_target[1].amax(dim=-1).detach()
+    target = reward[1] + discount_factor * max_q * must_bootstrap[1]
+    act = action[0].unsqueeze(dim=-1)
+    qvals = q_values[0].gather(dim=1, index=act)
+    qvals = qvals.squeeze(dim=1)
+    return nn.MSELoss()(qvals, target)
 
 # Configure the optimizer over the q agent
 def setup_optimizer(cfg, q_agent):
