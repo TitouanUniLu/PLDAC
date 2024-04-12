@@ -19,6 +19,7 @@ import hydra
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import pytorch_lightning as pl
 
 # BBRL imports
 from bbrl.agents.agent import Agent
@@ -41,14 +42,15 @@ class ImageAgent(Agent):
 
     def forward(self, t: int, **kwargs):
         features = []
-
+        total_loss = 0.0
         for env_index in range(self.env_agent.num_envs):
             image = self.env_agent.envs[env_index].render()
             processed_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
             processed_image = cv2.resize(
                 processed_image, (84, 84)
             )  
-
+            #plt.imshow(processed_image)
+            #plt.show()
             processed_image_tensor = torch.tensor(processed_image, dtype=float)
 
             self.image_buffer[env_index].pop(0)
@@ -59,41 +61,47 @@ class ImageAgent(Agent):
                 torch.tensor(stacked_frames, dtype=torch.float32).unsqueeze(0) / 255.0
             )
 
-            assert input_tensor.shape == (
-                1,
-                4,
-                84,
-                84,
-            ), f"Expected input_tensor shape to be [1, 4, 84, 84], got {input_tensor.shape}"
+            self.cnn.train()  # Set the CNN to training mode
 
-            self.cnn.eval()  
-            with torch.no_grad():
-                cnn_output = self.cnn(input_tensor)
+            cnn_output = self.cnn(input_tensor).squeeze(0)
 
-            features.append(cnn_output.squeeze(0))
+            real_observations = self.get(("env/env_obs", t))[env_index]
+
+            loss = F.mse_loss(cnn_output, real_observations)  # Compute the MSE loss
+            total_loss += loss.item()
+
+            features.append(cnn_output)
+        # Backpropagation
+        #print(total_loss)
+        total_loss_tensor = torch.tensor(total_loss, requires_grad=True)
+        self.cnn.optimizer.zero_grad()
+        total_loss_tensor.backward()
+        self.cnn.optimizer.step()    
+
         features_tensor = torch.stack(features)
-
         self.set(("env/features", t), features_tensor)
 
-
-TENSRSIZE = 32
+TENSRSIZE = 4
 class SimpleCNN(nn.Module):
     def __init__(self):
         super(SimpleCNN, self).__init__()
 
-        self.conv1 = nn.Conv2d(in_channels=4, out_channels=16, kernel_size=8, stride=4)
-        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=4, stride=2)
-        self.fc1 = nn.Linear(in_features=32 * 9 * 9, out_features=256)
-        self.out = nn.Linear(in_features=256, out_features=32)
-        self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
+        self.conv1 = nn.Conv2d(4, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)        
+        self.fc1 = nn.Linear(16 * 18 * 18, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 4)
+
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
 
     def forward(self, x):
-        x = F.relu(self.conv1(x))
-        x = F.relu(self.conv2(x))
-        x = x.view(-1, 32 * 9 * 9)
-        x = F.dropout(x, p=0.5, training=self.training)
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))        
+        x = x.view(-1, 16 * 18 * 18)  
         x = F.relu(self.fc1(x))
-        x = self.out(x)
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
         return x
 
 def build_mlp(sizes, activation, output_activation=nn.Identity()):
@@ -112,7 +120,7 @@ class DiscreteQAgent(Agent):
         )
 
     def forward(self, t: int, choose_action=True, **kwargs):
-        current_features = self.get(("env/features", t))
+        current_features = self.get(("env/env_obs", t)) #"env/features"
         # print('features', current_features)
         # print(current_features.shape)
 
@@ -348,7 +356,6 @@ def run_best_dqn(cfg, compute_critic_loss):
             logger.log_reward_losses(rewards, nb_steps)
             pbar.set_description(f"nb steps: {nb_steps}, reward: {mean:.3f}")
             if cfg.save_best and mean > best_reward:
-                print("test 3")
                 best_reward = mean
                 best_agent = copy.deepcopy(eval_agent.agent.agents[2])
                 directory = "./dqn_critic/"
