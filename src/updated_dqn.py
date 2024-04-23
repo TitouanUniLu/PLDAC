@@ -276,7 +276,7 @@ def local_get_env_agents(cfg):
         partial(
             make_env,
             cfg.gym_env.env_name,
-            render_mode="rgb_array",
+            #render_mode="rgb_array",
             autoreset=False,
         ),
         cfg.algorithm.nb_evals,
@@ -287,7 +287,7 @@ def local_get_env_agents(cfg):
         partial(
             make_env,
             cfg.gym_env.env_name,
-            render_mode="rgb_array",
+            #render_mode="rgb_array",
             autoreset=True,
         ),
         cfg.algorithm.n_envs,
@@ -352,8 +352,9 @@ def create_dqn_agent(cfg_algo, train_env_agent, eval_env_agent):
     train_image_agent = ImageAgent(train_env_agent)
     eval_image_agent = ImageAgent(eval_env_agent)
 
-    tr_agent = Agents(train_env_agent, train_image_agent, critic, explorer)  # , PrintAgent())
-    ev_agent = Agents(eval_env_agent, eval_image_agent ,critic)
+    ''' ADD IMAGE AGENTS HERE'''
+    tr_agent = Agents(train_env_agent, critic, explorer)  # , PrintAgent())
+    ev_agent = Agents(eval_env_agent ,critic)
 
     # Get an agent that is executed on a complete workspace
     train_agent = TemporalAgent(tr_agent)
