@@ -1,0 +1,40 @@
+save_best: true
+plot_agents: true
+collect_stats: true
+log_dir: ./tmp
+video_dir: ${log_dir}/videos
+logger:
+  classname: bbrl.utils.logger.TFLogger
+  log_dir: ${log_dir}
+  cache_size: 10000
+  every_n_seconds: 5
+  verbose: false
+gym_env:
+  env_name: CartPole-v1
+  render_mode: rgb_array
+algorithm:
+  architecture:
+    hidden_size:
+    - 64
+    - 64
+  seed: 4
+  epsilon: 0.02
+  epsilon_start: 0.7
+  epsilon_end: 0.2
+  decay: 0.999
+  buffer_size: 150000.0
+  batch_size: 256
+  learning_starts: 2000
+  target_critic_update_interval: 100
+  max_grad_norm: 0.5
+  nb_evals: 10
+  n_envs: 10
+  n_steps_train: 50
+  n_updates: 3
+  discount_factor: 0.9
+  max_epochs: 3500
+  n_steps: 300
+  eval_interval: 10
+optimizer:
+  classname: torch.optim.Adam
+  lr: 0.003
