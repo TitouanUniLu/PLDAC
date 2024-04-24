@@ -9,6 +9,7 @@ import copy
 import os
 import numpy as np
 from typing import Callable, List
+from PIL import Image
 
 import hydra
 import optuna
@@ -18,6 +19,7 @@ from omegaconf import DictConfig
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torchvision.transforms as transforms
 
 # %%
 import gymnasium as gym
@@ -225,7 +227,7 @@ class DiscreteQAgent(NamedCritic):
         self.is_q_function = True
 
     def forward(self, t, choose_action=True, **kwargs):
-        obs = self.get(("env/env_obs", t))
+        obs = self.get(("env/features", t))
         # print("in critic forward: obs:", obs)
         q_values = self.model(obs)
         self.set((f"{self.name}/q_values", t), q_values)
@@ -276,7 +278,7 @@ def local_get_env_agents(cfg):
         partial(
             make_env,
             cfg.gym_env.env_name,
-            #render_mode="rgb_array",
+            render_mode="rgb_array",
             autoreset=False,
         ),
         cfg.algorithm.nb_evals,
@@ -287,7 +289,7 @@ def local_get_env_agents(cfg):
         partial(
             make_env,
             cfg.gym_env.env_name,
-            #render_mode="rgb_array",
+            render_mode="rgb_array",
             autoreset=True,
         ),
         cfg.algorithm.n_envs,
@@ -353,8 +355,8 @@ def create_dqn_agent(cfg_algo, train_env_agent, eval_env_agent):
     eval_image_agent = ImageAgent(eval_env_agent)
 
     ''' ADD IMAGE AGENTS HERE'''
-    tr_agent = Agents(train_env_agent, critic, explorer)  # , PrintAgent())
-    ev_agent = Agents(eval_env_agent ,critic)
+    tr_agent = Agents(train_env_agent, train_image_agent, critic, explorer)  # , PrintAgent())
+    ev_agent = Agents(eval_env_agent, eval_image_agent, critic)
 
     # Get an agent that is executed on a complete workspace
     train_agent = TemporalAgent(tr_agent)
@@ -539,85 +541,159 @@ def run_dqn(cfg, logger, trial=None):
         fo.close()
 
     return best_reward
-TENSRSIZE = 4
-class SimpleCNN(nn.Module):
+
+TENSRSIZE = 4 
+class SimpleCNN(nn.Module): ### ARCHITECTURE USED FOR THE PRETRAINED MODEL
     def __init__(self):
         super(SimpleCNN, self).__init__()
-
-        self.conv1 = nn.Conv2d(4, 6, 5)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)        
-        self.fc1 = nn.Linear(16 * 18 * 18, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 4)
-
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+        self.conv_layers = nn.Sequential(
+            nn.Conv3d(3, 16, kernel_size=(3, 3, 3), stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2)),
+            nn.Conv3d(16, 32, kernel_size=(3, 3, 3), stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2)),
+        )
+        # Correctly calculate the input size for the linear layer based on the output from conv_layers
+        self.fc_layers = nn.Sequential(
+            nn.Linear(32 * 4 * 16 * 16, 128),  # Adjusted based on actual output size
+            nn.ReLU(),
+            nn.Linear(128, 4)  # Predicting 4 state variables
+        )
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))        
-        x = x.view(-1, 16 * 18 * 18)  
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = self.fc3(x)
+        x = self.conv_layers(x)
+        x = x.view(x.size(0), -1)  # Flatten the tensor for the fully connected layer
+        x = self.fc_layers(x)
         return x
 
-class ImageAgent(Agent):
-        def __init__(self, env_agent):
-            super().__init__()
-            self.env_agent = env_agent
-            self.cnn = SimpleCNN()
-            self.image_buffer = [
-                [torch.zeros(84, 84) for _ in range(4)]
-                for _ in range(self.env_agent.num_envs)
-            ]
+# class SimpleCNN(nn.Module):  ### OLD CNN 
+#     def __init__(self):
+#         super(SimpleCNN, self).__init__()
+
+#         self.conv1 = nn.Conv2d(4, 6, 5)
+#         self.pool = nn.MaxPool2d(2, 2)
+#         self.conv2 = nn.Conv2d(6, 16, 5)        
+#         self.fc1 = nn.Linear(16 * 18 * 18, 120)
+#         self.fc2 = nn.Linear(120, 84)
+#         self.fc3 = nn.Linear(84, 4)
+
+#         self.optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
+
+#     def forward(self, x):
+#         x = self.pool(F.relu(self.conv1(x)))
+#         x = self.pool(F.relu(self.conv2(x)))        
+#         x = x.view(-1, 16 * 18 * 18)  
+#         x = F.relu(self.fc1(x))
+#         x = F.relu(self.fc2(x))
+#         x = self.fc3(x)
+#         return x
+
+# class ImageAgent(Agent): ### IMAGE AGENT W/ SIMULTANEOUSLY TRAINING CNN
+#         def __init__(self, env_agent):
+#             super().__init__()
+#             self.env_agent = env_agent
+#             self.cnn = SimpleCNN()
+#             self.image_buffer = [
+#                 [torch.zeros(84, 84) for _ in range(4)]
+#                 for _ in range(self.env_agent.num_envs)
+#             ]
     
-        def forward(self, t: int, **kwargs):
-            features = []
-            total_loss = 0.0
-            for env_index in range(self.env_agent.num_envs):
-                image = self.env_agent.envs[env_index].render()
+#         def forward(self, t: int, **kwargs):
+#             features = []
+#             total_loss = 0.0
+#             for env_index in range(self.env_agent.num_envs):
+#                 image = self.env_agent.envs[env_index].render()
+#                 processed_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+#                 processed_image = cv2.resize(
+#                     processed_image, (84, 84)
+#                 )  
+#                 # plt.imshow(processed_image)
+#                 # plt.show()
+#                 # time.sleep(5)
                 
-                processed_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-                processed_image = cv2.resize(
-                    processed_image, (84, 84)
-                )  
-                # plt.imshow(processed_image)
-                # plt.show()
-                # time.sleep(5)
-                
-                processed_image_tensor = torch.tensor(processed_image, dtype=float)
+#                 processed_image_tensor = torch.tensor(processed_image, dtype=float)
     
-                self.image_buffer[env_index].pop(0)
-                self.image_buffer[env_index].append(processed_image_tensor)
+#                 self.image_buffer[env_index].pop(0)
+#                 self.image_buffer[env_index].append(processed_image_tensor)
     
-                stacked_frames = np.stack(self.image_buffer[env_index], axis=0)
-                input_tensor = (
-                    torch.tensor(stacked_frames, dtype=torch.float32).unsqueeze(0) / 255.0
-                )
+#                 stacked_frames = np.stack(self.image_buffer[env_index], axis=0)
+#                 input_tensor = (
+#                     torch.tensor(stacked_frames, dtype=torch.float32).unsqueeze(0) / 255.0
+#                 )
     
-                self.cnn.train()  # Set the CNN to training mode
+#                 self.cnn.train()  # Set the CNN to training mode
     
-                cnn_output = self.cnn(input_tensor).squeeze(0)
+#                 cnn_output = self.cnn(input_tensor).squeeze(0)
     
-                real_observations = self.get(("env/env_obs", t))[env_index]
+#                 real_observations = self.get(("env/env_obs", t))[env_index]
     
-                loss = F.mse_loss(cnn_output, real_observations)  # Compute the MSE loss
+#                 loss = F.mse_loss(cnn_output, real_observations)  # Compute the MSE loss
     
-                # Backpropagation
-                self.cnn.optimizer.zero_grad()
-                loss.backward()
-                self.cnn.optimizer.step()
+#                 # Backpropagation
+#                 self.cnn.optimizer.zero_grad()
+#                 loss.backward()
+#                 self.cnn.optimizer.step()
     
-                total_loss += loss.item()
-                features.append(cnn_output)
+#                 total_loss += loss.item()
+#                 features.append(cnn_output)
             
-            # print(f' loss at time {t}: {total_loss}')
-            # total_loss_tensor = torch.tensor(total_loss, requires_grad=True)
+#             # print(f' loss at time {t}: {total_loss}')
+#             # total_loss_tensor = torch.tensor(total_loss, requires_grad=True)
                 
     
-            features_tensor = torch.stack(features)
-            self.set(("env/features", t), features_tensor)
+#             features_tensor = torch.stack(features)
+#             self.set(("env/features", t), features_tensor)
+
+def preprocess_image(image):
+    # Convert image to grayscale and resize to 84x84
+    gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+    resized_image = cv2.resize(gray_image, (84, 84))
+    return torch.tensor(resized_image, dtype=torch.float32) / 255.0  # Normalize the image
+
+
+class ImageAgent(Agent): ### NEW IMAGE AGENT WITH PRETRAINED CNN
+    def __init__(self, env_agent, model_path = os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/cartpole_cnn_test2.pth')
+    
+):
+        super().__init__()
+        self.env_agent = env_agent
+        self.cnn = SimpleCNN()
+        self.cnn.load_state_dict(torch.load(model_path))
+        self.cnn.eval()
+
+        # Initialize an image buffer for each environment, storing RGB images
+        self.image_buffer = [
+            [torch.zeros(3, 64, 64) for _ in range(4)]
+            for _ in range(self.env_agent.num_envs)
+        ]
+
+    def forward(self, t: int, **kwargs):
+        features = []
+        transform = transforms.Compose([
+        transforms.Resize((64, 64)),  # Resize image to manageable size
+        transforms.ToTensor()         # Convert image to PyTorch tensor
+    ])
+        for env_index in range(self.env_agent.num_envs):
+            image = self.env_agent.envs[env_index].render()
+            processed_image = transform(Image.fromarray(image))
+            
+            # Update the image buffer
+            self.image_buffer[env_index].pop(0)
+            self.image_buffer[env_index].append(processed_image)
+
+            # Stack and normalize the images
+            input_tensor = torch.stack(self.image_buffer[env_index], dim=1).unsqueeze(0)  # Shape [1, 3, sequence_length, 64, 64]
+
+            # Perform inference
+            with torch.no_grad():
+                cnn_output = self.cnn(input_tensor).squeeze(0)
+
+            features.append(cnn_output)
+
+        features_tensor = torch.stack(features)
+        self.set(("env/features", t), features_tensor)
+
 
 # %%
 @hydra.main(
