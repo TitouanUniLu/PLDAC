@@ -367,9 +367,9 @@ def create_dqn_agent(cfg_algo, train_env_agent, eval_env_agent):
 
 # %%
 # Configure the optimizer over the q agent
-def setup_optimizer(optimizer_cfg, q_agent):
+def setup_optimizer(optimizer_cfg, q_agent, train_image_agent, eval_image_agent):
     optimizer_args = get_arguments(optimizer_cfg)
-    parameters = q_agent.parameters()
+    parameters = list(q_agent.parameters()) + list(train_image_agent.cnn.parameters()) + list(eval_image_agent.cnn.parameters())
     optimizer = get_class(optimizer_cfg)(parameters, **optimizer_args)
     return optimizer
 
@@ -397,7 +397,7 @@ def run_dqn(cfg, logger, trial=None):
     train_workspace = Workspace()  # Used for training
 
     # 5) Configure the optimizer
-    optimizer = setup_optimizer(cfg.optimizer, q_agent)
+    optimizer = setup_optimizer(cfg.optimizer, q_agent, train_agent.agent.agents[1], eval_agent.agent.agents[1])
 
     # 6) Define the steps counters
     nb_steps = 0
@@ -467,7 +467,10 @@ def run_dqn(cfg, logger, trial=None):
         optimizer.zero_grad()
         critic_loss.backward()
         torch.nn.utils.clip_grad_norm_(
-            q_agent.parameters(), cfg.algorithm.max_grad_norm
+            list(q_agent.parameters())+
+            list(train_agent.agent.agents[1].cnn.parameters())+
+            list(eval_agent.agent.agents[1].cnn.parameters()),
+            cfg.algorithm.max_grad_norm
         )
 
         optimizer.step()
@@ -653,14 +656,14 @@ def preprocess_image(image):
 
 
 class ImageAgent(Agent): ### NEW IMAGE AGENT WITH PRETRAINED CNN
-    def __init__(self, env_agent, model_path = os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/cartpole_cnn_test2.pth')
+    def __init__(self, env_agent, model_path = os.path.abspath('src/cartpole_cnn_test.pth')
     
 ):
         super().__init__()
         self.env_agent = env_agent
         self.cnn = SimpleCNN()
         self.cnn.load_state_dict(torch.load(model_path))
-        self.cnn.eval()
+        self.cnn.eval() #change to .train() pour la backprop
 
         # Initialize an image buffer for each environment, storing RGB images
         self.image_buffer = [
@@ -699,7 +702,7 @@ class ImageAgent(Agent): ### NEW IMAGE AGENT WITH PRETRAINED CNN
 @hydra.main(
     config_path="configs/",
     # config_name="dqn_cartpole.yaml",
-    config_name="dqn_lunar_lander.yaml",
+    config_name="dqn_cartpole.yaml",
 )  # , version_base="1.3")
 def main(cfg_raw: DictConfig):
     torch.random.manual_seed(seed=cfg_raw.algorithm.seed.torch)
@@ -712,4 +715,11 @@ def main(cfg_raw: DictConfig):
 
 
 if __name__ == "__main__":
+    #pour plus tard
+    if torch.cuda.is_available():
+        device = torch.device("cuda")
+        print("Using GPU:", torch.cuda.get_device_name(0))
+    else:
+        device = torch.device("cpu")
+        print("CUDA is not available. Using CPU.")
     main()
