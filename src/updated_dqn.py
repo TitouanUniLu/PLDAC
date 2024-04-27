@@ -648,12 +648,29 @@ class SimpleCNN(nn.Module): ### ARCHITECTURE USED FOR THE PRETRAINED MODEL
 #             features_tensor = torch.stack(features)
 #             self.set(("env/features", t), features_tensor)
 
-def preprocess_image(image):
-    # Convert image to grayscale and resize to 84x84
-    gray_image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-    resized_image = cv2.resize(gray_image, (84, 84))
-    return torch.tensor(resized_image, dtype=torch.float32) / 255.0  # Normalize the image
+class CNN(nn.Module):
+    def __init__(self):
+        super(CNN, self).__init__()
+        self.conv_layers = nn.Sequential(
+            nn.Conv3d(3, 16, kernel_size=(3, 3, 3), stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2)),
+            nn.Conv3d(16, 32, kernel_size=(3, 3, 3), stride=1, padding=1),
+            nn.ReLU(),
+            nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2)),
+        )
+        # Correctly calculate the input size for the linear layer based on the output from conv_layers
+        self.fc_layers = nn.Sequential(
+            nn.Linear(32 * 4 * 16 * 16, 128),  # Adjusted based on actual output size
+            nn.ReLU(),
+            nn.Linear(128, 4)  # Predicting 4 state variables
+        )
 
+    def forward(self, x):
+        x = self.conv_layers(x)
+        x = x.view(x.size(0), -1)  # Flatten the tensor for the fully connected layer
+        x = self.fc_layers(x)
+        return x
 
 class ImageAgent(Agent): ### NEW IMAGE AGENT WITH PRETRAINED CNN
     def __init__(self, env_agent, model_path = os.path.abspath('src/cartpole_cnn_test.pth')
@@ -661,7 +678,7 @@ class ImageAgent(Agent): ### NEW IMAGE AGENT WITH PRETRAINED CNN
 ):
         super().__init__()
         self.env_agent = env_agent
-        self.cnn = SimpleCNN()
+        self.cnn = CNN()
         self.cnn.load_state_dict(torch.load(model_path))
         self.cnn.eval() #change to .train() pour la backprop
 
@@ -691,6 +708,9 @@ class ImageAgent(Agent): ### NEW IMAGE AGENT WITH PRETRAINED CNN
             # Perform inference
             with torch.no_grad():
                 cnn_output = self.cnn(input_tensor).squeeze(0)
+
+            # print("COMPARAISON :")
+            # print(cnn_output, self.get(("env/env_obs",t))[env_index])
 
             features.append(cnn_output)
 
