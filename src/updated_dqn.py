@@ -367,9 +367,9 @@ def create_dqn_agent(cfg_algo, train_env_agent, eval_env_agent):
 
 # %%
 # Configure the optimizer over the q agent
-def setup_optimizer(optimizer_cfg, q_agent, train_image_agent, eval_image_agent):
+def setup_optimizer(optimizer_cfg, q_agent):
     optimizer_args = get_arguments(optimizer_cfg)
-    parameters = list(q_agent.parameters()) + list(train_image_agent.cnn.parameters()) + list(eval_image_agent.cnn.parameters())
+    parameters = q_agent.parameters()
     optimizer = get_class(optimizer_cfg)(parameters, **optimizer_args)
     return optimizer
 
@@ -397,7 +397,7 @@ def run_dqn(cfg, logger, trial=None):
     train_workspace = Workspace()  # Used for training
 
     # 5) Configure the optimizer
-    optimizer = setup_optimizer(cfg.optimizer, q_agent, train_agent.agent.agents[1], eval_agent.agent.agents[1])
+    optimizer = setup_optimizer(cfg.optimizer, q_agent)
 
     # 6) Define the steps counters
     nb_steps = 0
@@ -467,10 +467,7 @@ def run_dqn(cfg, logger, trial=None):
         optimizer.zero_grad()
         critic_loss.backward()
         torch.nn.utils.clip_grad_norm_(
-            list(q_agent.parameters())+
-            list(train_agent.agent.agents[1].cnn.parameters())+
-            list(eval_agent.agent.agents[1].cnn.parameters()),
-            cfg.algorithm.max_grad_norm
+            q_agent.parameters(), cfg.algorithm.max_grad_norm
         )
 
         optimizer.step()
@@ -545,30 +542,9 @@ def run_dqn(cfg, logger, trial=None):
 
     return best_reward
 
-TENSRSIZE = 4 
-class SimpleCNN(nn.Module): ### ARCHITECTURE USED FOR THE PRETRAINED MODEL
-    def __init__(self):
-        super(SimpleCNN, self).__init__()
-        self.conv_layers = nn.Sequential(
-            nn.Conv3d(3, 16, kernel_size=(3, 3, 3), stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2)),
-            nn.Conv3d(16, 32, kernel_size=(3, 3, 3), stride=1, padding=1),
-            nn.ReLU(),
-            nn.MaxPool3d(kernel_size=(1, 2, 2), stride=(1, 2, 2)),
-        )
-        # Correctly calculate the input size for the linear layer based on the output from conv_layers
-        self.fc_layers = nn.Sequential(
-            nn.Linear(32 * 4 * 16 * 16, 128),  # Adjusted based on actual output size
-            nn.ReLU(),
-            nn.Linear(128, 4)  # Predicting 4 state variables
-        )
 
-    def forward(self, x):
-        x = self.conv_layers(x)
-        x = x.view(x.size(0), -1)  # Flatten the tensor for the fully connected layer
-        x = self.fc_layers(x)
-        return x
+TENSRSIZE = 4 
+
 
 # class SimpleCNN(nn.Module):  ### OLD CNN 
 #     def __init__(self):
@@ -648,7 +624,8 @@ class SimpleCNN(nn.Module): ### ARCHITECTURE USED FOR THE PRETRAINED MODEL
 #             features_tensor = torch.stack(features)
 #             self.set(("env/features", t), features_tensor)
 
-class CNN(nn.Module):
+
+class CNN(nn.Module): ### CNN FOR RGB IMAGES 
     def __init__(self):
         super(CNN, self).__init__()
         self.conv_layers = nn.Sequential(
@@ -661,7 +638,7 @@ class CNN(nn.Module):
         )
         # Correctly calculate the input size for the linear layer based on the output from conv_layers
         self.fc_layers = nn.Sequential(
-            nn.Linear(32 * 4 * 16 * 16, 128),  # Adjusted based on actual output size
+            nn.Linear(63360, 128),  # Adjusted based on actual output size
             nn.ReLU(),
             nn.Linear(128, 4)  # Predicting 4 state variables
         )
@@ -671,9 +648,74 @@ class CNN(nn.Module):
         x = x.view(x.size(0), -1)  # Flatten the tensor for the fully connected layer
         x = self.fc_layers(x)
         return x
+    
+class CartPoleCNN(nn.Module): ### CNN FOR GREY IMAGES
+    def __init__(self):
+        super(CartPoleCNN, self).__init__()
+        self.conv_layers = nn.Sequential(
+            nn.Conv2d(4, 16, kernel_size=5, stride=1, padding=2),  # Input: 4 gray images, output: 16 channels, 60x135
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),                 # Output size: ? 30x67
+            nn.Conv2d(16, 32, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2),                 # Output size: ? 15x33
+            nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2),
+            nn.ReLU(),
+            nn.MaxPool2d(kernel_size=2, stride=2)                  # Output size: ? 7x16
+        )
+        self.fc_layers = nn.Sequential(
+            nn.Linear(64 * 7 * 16, 128),
+            nn.ReLU(),
+            nn.Linear(128,4)    # x, x_dot, theta, theta_dot
+        )
 
-class ImageAgent(Agent): ### NEW IMAGE AGENT WITH PRETRAINED CNN
-    def __init__(self, env_agent, model_path = os.path.abspath('src/cartpole_cnn_test.pth')
+    def forward(self, x):
+        x = self.conv_layers(x)
+        x = x.view(x.size(0), -1)  # Flatten the output for the fully connected layers
+        x = self.fc_layers(x)
+        return x
+
+# Transformation for images
+transform_rgb = transforms.Compose([transforms.ToPILImage(), 
+                    transforms.Resize(60, interpolation=Image.LANCZOS),
+                    transforms.ToTensor()])
+
+# Cart location for centering image crop
+def get_cart_location(screen_width,env):
+    world_width = env.x_threshold * 2
+    scale = screen_width / world_width
+    return int(env.state[0] * scale + screen_width / 2.0)  # MIDDLE OF CART
+
+# Cropping, downsampling (and Grayscaling) image
+def get_screen_rgb(env):
+    # Returned screen requested by gym is 400x600x3, but is sometimes larger
+    # such as 800x1200x3. Transpose it into torch order (CHW).
+    screen = env.render().transpose((2, 0, 1))
+    # Cart is in the lower half, so strip off the top and bottom of the screen
+    _, screen_height, screen_width = screen.shape
+    screen = screen[:, int(screen_height*0.4):int(screen_height * 0.8)]
+    view_width = int(screen_width * 0.6)
+    cart_location = get_cart_location(screen_width,env)
+    if cart_location < view_width // 2:
+        slice_range = slice(view_width)
+    elif cart_location > (screen_width - view_width // 2):
+        slice_range = slice(-view_width, None)
+    else:
+        slice_range = slice(cart_location - view_width // 2,
+                            cart_location + view_width // 2)
+    # Strip off the edges, so that we have a square image centered on a cart
+    screen = screen[:, :, slice_range]
+    # Convert to float, rescale, convert to torch tensor
+    # (this doesn't require a copy)
+    screen = np.ascontiguousarray(screen, dtype=np.float32) / 255
+    # Resize, and add a batch dimension (BCHW)
+    screen = torch.from_numpy(screen)
+    return transform_rgb(screen)
+
+
+class ImageAgent(Agent): ### Image Agent for RGB Images
+    def __init__(self, env_agent, model_path = 
+                 os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/cartpole_cnn_rgb.pth')
     
 ):
         super().__init__()
@@ -684,27 +726,23 @@ class ImageAgent(Agent): ### NEW IMAGE AGENT WITH PRETRAINED CNN
 
         # Initialize an image buffer for each environment, storing RGB images
         self.image_buffer = [
-            [torch.zeros(3, 64, 64) for _ in range(4)]
+            [torch.zeros(3, 60, 135) for _ in range(4)]
             for _ in range(self.env_agent.num_envs)
         ]
 
     def forward(self, t: int, **kwargs):
         features = []
-        transform = transforms.Compose([
-        transforms.Resize((64, 64)),  # Resize image to manageable size
-        transforms.ToTensor()         # Convert image to PyTorch tensor
-    ])
+
         for env_index in range(self.env_agent.num_envs):
-            image = self.env_agent.envs[env_index].render()
-            processed_image = transform(Image.fromarray(image))
+            env = self.env_agent.envs[env_index]
+            processed_image = get_screen_rgb(env)
             
             # Update the image buffer
             self.image_buffer[env_index].pop(0)
             self.image_buffer[env_index].append(processed_image)
 
             # Stack and normalize the images
-            input_tensor = torch.stack(self.image_buffer[env_index], dim=1).unsqueeze(0)  # Shape [1, 3, sequence_length, 64, 64]
-
+            input_tensor = torch.stack(self.image_buffer[env_index][-4:], dim=0).permute(1, 0, 2, 3).unsqueeze(0) # Shape [1, 3, sequence_length, 64, 64]
             # Perform inference
             with torch.no_grad():
                 cnn_output = self.cnn(input_tensor).squeeze(0)
@@ -717,12 +755,91 @@ class ImageAgent(Agent): ### NEW IMAGE AGENT WITH PRETRAINED CNN
         features_tensor = torch.stack(features)
         self.set(("env/features", t), features_tensor)
 
+transform_grey = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Resize((60, 135)),
+    transforms.Grayscale()
+])
+
+
+# Cropping, downsampling (and Grayscaling) image
+def get_screen_grey(env):
+    # Returned screen requested by gym is 400x600x3, but is sometimes larger
+    # such as 800x1200x3. Transpose it into torch order (CHW).
+    screen = env.render().transpose((2, 0, 1))
+    # Cart is in the lower half, so strip off the top and bottom of the screen
+    _, screen_height, screen_width = screen.shape
+    screen = screen[:, int(screen_height*0.4):int(screen_height * 0.8)]
+    view_width = int(screen_width * 0.6)
+    cart_location = get_cart_location(screen_width,env)
+    if cart_location < view_width // 2:
+        slice_range = slice(view_width)
+    elif cart_location > (screen_width - view_width // 2):
+        slice_range = slice(-view_width, None)
+    else:
+        slice_range = slice(cart_location - view_width // 2,
+                            cart_location + view_width // 2)
+    # Strip off the edges, so that we have a square image centered on a cart
+    screen = screen[:, :, slice_range]
+    # Convert to float, rescale, convert to torch tensor
+    # (this doesn't require a copy)
+    screen = np.ascontiguousarray(screen, dtype=np.float32) / 255
+    # Resize, and add a batch dimension (BCHW)
+    return transform_grey(screen.transpose(1,2,0)).squeeze(0)
+
+
+# class ImageAgent(Agent): ### Image Agent for grey images
+#     def __init__(self, env_agent, model_path = 
+#                  os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/jamaiscamarche.pth')
+    
+# ):
+#         super().__init__()
+#         self.env_agent = env_agent
+#         self.cnn = CartPoleCNN()
+#         self.cnn.load_state_dict(torch.load(model_path))
+#         self.cnn.eval() #change to .train() pour la backprop
+
+#         # Initialize an image buffer for each environment, storing RGB images
+#         self.image_buffer = [
+#             [torch.zeros(60, 135) for _ in range(4)]
+#             for _ in range(self.env_agent.num_envs)
+#         ]
+
+#     def forward(self, t: int, **kwargs):
+#         features = []
+  
+#         for env_index in range(self.env_agent.num_envs):
+#             env = self.env_agent.envs[env_index]
+#             # a = env.render(mode="rgb_array")
+#             # print(a.shape)
+
+#             processed_image = get_screen_grey(env)
+            
+#             # Update the image buffer
+#             self.image_buffer[env_index].pop(0)
+#             self.image_buffer[env_index].append(processed_image)
+
+#             # Stack and normalize the images
+#             input_tensor = torch.stack(self.image_buffer[env_index][-4:], dim=0) # Shape [1, 3, sequence_length, 64, 64]
+
+#             # Perform inference
+#             with torch.no_grad():
+#                 cnn_output = self.cnn(input_tensor.unsqueeze(0)).squeeze(0)
+
+#             # print("COMPARAISON :")
+#             # print(cnn_output, self.get(("env/env_obs",t))[env_index])
+
+#             features.append(cnn_output)
+
+#         features_tensor = torch.stack(features)
+#         self.set(("env/features", t), features_tensor)
+
 
 # %%
 @hydra.main(
     config_path="configs/",
     # config_name="dqn_cartpole.yaml",
-    config_name="dqn_cartpole.yaml",
+    config_name="dqn_lunar_lander.yaml",
 )  # , version_base="1.3")
 def main(cfg_raw: DictConfig):
     torch.random.manual_seed(seed=cfg_raw.algorithm.seed.torch)
@@ -735,11 +852,4 @@ def main(cfg_raw: DictConfig):
 
 
 if __name__ == "__main__":
-    #pour plus tard
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
-        print("Using GPU:", torch.cuda.get_device_name(0))
-    else:
-        device = torch.device("cpu")
-        print("CUDA is not available. Using CPU.")
     main()
