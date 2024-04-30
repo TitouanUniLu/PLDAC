@@ -48,6 +48,7 @@ import yaml
 import random
 import cv2
 import time
+import mon_env
 
 matplotlib.use("TkAgg")
 
@@ -715,7 +716,7 @@ def get_screen_rgb(env):
 
 class ImageAgent(Agent): ### Image Agent for RGB Images
     def __init__(self, env_agent, model_path = 
-                 os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/cartpole_cnn_rgb.pth')
+                 os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/cartpole_cnn_rgb_enhanced.pth')
     
 ):
         super().__init__()
@@ -790,7 +791,7 @@ def get_screen_grey(env):
 
 # class ImageAgent(Agent): ### Image Agent for grey images
 #     def __init__(self, env_agent, model_path = 
-#                  os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/jamaiscamarche.pth')
+#                  os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/cnn_grey_1000.pth')
     
 # ):
 #         super().__init__()

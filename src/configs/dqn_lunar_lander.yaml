@@ -18,7 +18,7 @@ logger:
   verbose: False
 
 gym_env:
-  env_name: CartPole-v1
+  env_name: MonCartPole-v1
   render_mode: rgb_array
 
 algorithm:
