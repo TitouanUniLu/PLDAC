@@ -639,7 +639,7 @@ class CNN(nn.Module): ### CNN FOR RGB IMAGES
         )
         # Correctly calculate the input size for the linear layer based on the output from conv_layers
         self.fc_layers = nn.Sequential(
-            nn.Linear(63360, 128),  # Adjusted based on actual output size
+            nn.Linear(int(63360/2), 128),  # Adjusted based on actual output size
             nn.ReLU(),
             nn.Linear(128, 4)  # Predicting 4 state variables
         )
@@ -713,10 +713,11 @@ def get_screen_rgb(env):
     screen = torch.from_numpy(screen)
     return transform_rgb(screen)
 
+sequence_length = 2 # Modifier ce paramètre selon le nb d'images en entrée
 
 class ImageAgent(Agent): ### Image Agent for RGB Images
     def __init__(self, env_agent, model_path = 
-                 os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/cartpole_cnn_rgb_enhanced.pth')
+                 os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/cartpole_cnn_rgb_enhanced_2_img.pth')
     
 ):
         super().__init__()
@@ -727,7 +728,7 @@ class ImageAgent(Agent): ### Image Agent for RGB Images
 
         # Initialize an image buffer for each environment, storing RGB images
         self.image_buffer = [
-            [torch.zeros(3, 60, 135) for _ in range(4)]
+            [torch.zeros(3, 60, 135) for _ in range(sequence_length)] 
             for _ in range(self.env_agent.num_envs)
         ]
 
@@ -743,7 +744,7 @@ class ImageAgent(Agent): ### Image Agent for RGB Images
             self.image_buffer[env_index].append(processed_image)
 
             # Stack and normalize the images
-            input_tensor = torch.stack(self.image_buffer[env_index][-4:], dim=0).permute(1, 0, 2, 3).unsqueeze(0) # Shape [1, 3, sequence_length, 64, 64]
+            input_tensor = torch.stack(self.image_buffer[env_index][-sequence_length :], dim=0).permute(1, 0, 2, 3).unsqueeze(0) # Shape [1, 3, sequence_length, 64, 64]
             # Perform inference
             with torch.no_grad():
                 cnn_output = self.cnn(input_tensor).squeeze(0)
