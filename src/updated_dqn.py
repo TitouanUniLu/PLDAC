@@ -654,7 +654,7 @@ class CartPoleCNN(nn.Module): ### CNN FOR GREY IMAGES
     def __init__(self):
         super(CartPoleCNN, self).__init__()
         self.conv_layers = nn.Sequential(
-            nn.Conv2d(4, 16, kernel_size=5, stride=1, padding=2),  # Input: 4 gray images, output: 16 channels, 60x135
+            nn.Conv2d(sequence_length, 16, kernel_size=5, stride=1, padding=2),  # Input: 4 gray images, output: 16 channels, 60x135
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),                 # Output size: ? 30x67
             nn.Conv2d(16, 32, kernel_size=5, stride=1, padding=2),
@@ -665,7 +665,7 @@ class CartPoleCNN(nn.Module): ### CNN FOR GREY IMAGES
             nn.MaxPool2d(kernel_size=2, stride=2)                  # Output size: ? 7x16
         )
         self.fc_layers = nn.Sequential(
-            nn.Linear(64 * 7 * 16, 128),
+            nn.Linear(15840, 128),
             nn.ReLU(),
             nn.Linear(128,4)    # x, x_dot, theta, theta_dot
         )
@@ -713,49 +713,49 @@ def get_screen_rgb(env):
     screen = torch.from_numpy(screen)
     return transform_rgb(screen)
 
-sequence_length = 2 # Modifier ce paramètre selon le nb d'images en entrée
+sequence_length = 4 # Modifier ce paramètre selon le nb d'images en entrée
 
-class ImageAgent(Agent): ### Image Agent for RGB Images
-    def __init__(self, env_agent, model_path = 
-                 os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/cartpole_cnn_rgb_enhanced_2_img.pth')
+# class ImageAgent(Agent): ### Image Agent for RGB Images
+#     def __init__(self, env_agent, model_path = 
+#                  os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/cartpole_cnn_rgb_enhanced_2_img_2.pth')
     
-):
-        super().__init__()
-        self.env_agent = env_agent
-        self.cnn = CNN()
-        self.cnn.load_state_dict(torch.load(model_path))
-        self.cnn.eval() #change to .train() pour la backprop
+# ):
+#         super().__init__()
+#         self.env_agent = env_agent
+#         self.cnn = CNN()
+#         self.cnn.load_state_dict(torch.load(model_path))
+#         self.cnn.eval() #change to .train() pour la backprop
 
-        # Initialize an image buffer for each environment, storing RGB images
-        self.image_buffer = [
-            [torch.zeros(3, 60, 135) for _ in range(sequence_length)] 
-            for _ in range(self.env_agent.num_envs)
-        ]
+#         # Initialize an image buffer for each environment, storing RGB images
+#         self.image_buffer = [
+#             [torch.zeros(3, 60, 135) for _ in range(sequence_length)] 
+#             for _ in range(self.env_agent.num_envs)
+#         ]
 
-    def forward(self, t: int, **kwargs):
-        features = []
+#     def forward(self, t: int, **kwargs):
+#         features = []
 
-        for env_index in range(self.env_agent.num_envs):
-            env = self.env_agent.envs[env_index]
-            processed_image = get_screen_rgb(env)
+#         for env_index in range(self.env_agent.num_envs):
+#             env = self.env_agent.envs[env_index]
+#             processed_image = get_screen_rgb(env)
             
-            # Update the image buffer
-            self.image_buffer[env_index].pop(0)
-            self.image_buffer[env_index].append(processed_image)
+#             # Update the image buffer
+#             self.image_buffer[env_index].pop(0)
+#             self.image_buffer[env_index].append(processed_image)
 
-            # Stack and normalize the images
-            input_tensor = torch.stack(self.image_buffer[env_index][-sequence_length :], dim=0).permute(1, 0, 2, 3).unsqueeze(0) # Shape [1, 3, sequence_length, 64, 64]
-            # Perform inference
-            with torch.no_grad():
-                cnn_output = self.cnn(input_tensor).squeeze(0)
+#             # Stack and normalize the images
+#             input_tensor = torch.stack(self.image_buffer[env_index][-sequence_length :], dim=0).permute(1, 0, 2, 3).unsqueeze(0) # Shape [1, 3, sequence_length, 64, 64]
+#             # Perform inference
+#             with torch.no_grad():
+#                 cnn_output = self.cnn(input_tensor).squeeze(0)
 
-            # print("COMPARAISON :")
-            # print(cnn_output, self.get(("env/env_obs",t))[env_index])
+#             # print("COMPARAISON :")
+#             # print(cnn_output, self.get(("env/env_obs",t))[env_index])
 
-            features.append(cnn_output)
+#             features.append(cnn_output)
 
-        features_tensor = torch.stack(features)
-        self.set(("env/features", t), features_tensor)
+#         features_tensor = torch.stack(features)
+#         self.set(("env/features", t), features_tensor)
 
 transform_grey = transforms.Compose([
     transforms.ToTensor(),
@@ -790,51 +790,51 @@ def get_screen_grey(env):
     return transform_grey(screen.transpose(1,2,0)).squeeze(0)
 
 
-# class ImageAgent(Agent): ### Image Agent for grey images
-#     def __init__(self, env_agent, model_path = 
-#                  os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/cnn_grey_1000.pth')
+class ImageAgent(Agent): ### Image Agent for grey images
+    def __init__(self, env_agent, model_path = 
+                 os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/cnn_grey_enhanced_2500.pth')
     
-# ):
-#         super().__init__()
-#         self.env_agent = env_agent
-#         self.cnn = CartPoleCNN()
-#         self.cnn.load_state_dict(torch.load(model_path))
-#         self.cnn.eval() #change to .train() pour la backprop
+):
+        super().__init__()
+        self.env_agent = env_agent
+        self.cnn = CartPoleCNN()
+        self.cnn.load_state_dict(torch.load(model_path))
+        self.cnn.eval() #change to .train() pour la backprop
 
-#         # Initialize an image buffer for each environment, storing RGB images
-#         self.image_buffer = [
-#             [torch.zeros(60, 135) for _ in range(4)]
-#             for _ in range(self.env_agent.num_envs)
-#         ]
+        # Initialize an image buffer for each environment, storing RGB images
+        self.image_buffer = [
+            [torch.zeros(60, 135) for _ in range(sequence_length)]
+            for _ in range(self.env_agent.num_envs)
+        ]
 
-#     def forward(self, t: int, **kwargs):
-#         features = []
+    def forward(self, t: int, **kwargs):
+        features = []
   
-#         for env_index in range(self.env_agent.num_envs):
-#             env = self.env_agent.envs[env_index]
-#             # a = env.render(mode="rgb_array")
-#             # print(a.shape)
+        for env_index in range(self.env_agent.num_envs):
+            env = self.env_agent.envs[env_index]
+            # a = env.render(mode="rgb_array")
+            # print(a.shape)
 
-#             processed_image = get_screen_grey(env)
+            processed_image = get_screen_grey(env)
             
-#             # Update the image buffer
-#             self.image_buffer[env_index].pop(0)
-#             self.image_buffer[env_index].append(processed_image)
+            # Update the image buffer
+            self.image_buffer[env_index].pop(0)
+            self.image_buffer[env_index].append(processed_image)
 
-#             # Stack and normalize the images
-#             input_tensor = torch.stack(self.image_buffer[env_index][-4:], dim=0) # Shape [1, 3, sequence_length, 64, 64]
+            # Stack and normalize the images
+            input_tensor = torch.stack(self.image_buffer[env_index][-sequence_length:], dim=0) # Shape [1, 3, sequence_length, 64, 64]
 
-#             # Perform inference
-#             with torch.no_grad():
-#                 cnn_output = self.cnn(input_tensor.unsqueeze(0)).squeeze(0)
+            # Perform inference
+            with torch.no_grad():
+                cnn_output = self.cnn(input_tensor.unsqueeze(0)).squeeze(0)
 
-#             # print("COMPARAISON :")
-#             # print(cnn_output, self.get(("env/env_obs",t))[env_index])
+            # print("COMPARAISON :")
+            # print(cnn_output, self.get(("env/env_obs",t))[env_index])
 
-#             features.append(cnn_output)
+            features.append(cnn_output)
 
-#         features_tensor = torch.stack(features)
-#         self.set(("env/features", t), features_tensor)
+        features_tensor = torch.stack(features)
+        self.set(("env/features", t), features_tensor)
 
 
 # %%

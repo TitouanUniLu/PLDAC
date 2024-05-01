@@ -32,10 +32,11 @@ algorithm:
     explorer: 456
     torch: 789
 
+
   explorer:
     epsilon_start: 0.7
-    epsilon_end: 0.05
-    decay: 0.996
+    epsilon_end: 0.2
+    decay: 0.99
 
   buffer:
     max_size: 20_000
@@ -43,14 +44,14 @@ algorithm:
     learning_starts: 2000
 
   target_critic_update_interval: 50
-  max_grad_norm: 1.5
+  max_grad_norm: 0.5
 
   nb_evals: 10
   n_envs: 5
   n_steps_train: 50
 
   optim_n_updates: 3
-  discount_factor: 0.99
+  discount_factor: 0.9
 
   n_steps: 900_000
   eval_interval: 1000
@@ -58,4 +59,4 @@ algorithm:
 
 optimizer:
   classname: torch.optim.Adam
-  lr: 0.001
+  lr: 0.003
