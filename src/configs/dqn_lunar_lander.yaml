@@ -47,7 +47,7 @@ algorithm:
   max_grad_norm: 0.5
 
   nb_evals: 10
-  n_envs: 5
+  n_envs: 7
   n_steps_train: 50
 
   optim_n_updates: 3

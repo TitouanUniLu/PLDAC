@@ -660,9 +660,9 @@ class CartPoleCNN(nn.Module): ### CNN FOR GREY IMAGES
             nn.Conv2d(16, 32, kernel_size=5, stride=1, padding=2),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),                 # Output size: ? 15x33
-            nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2)                  # Output size: ? 7x16
+            # nn.Conv2d(32, 64, kernel_size=5, stride=1, padding=2),
+            # nn.ReLU(),
+            # nn.MaxPool2d(kernel_size=2, stride=2)                  # Output size: ? 7x16
         )
         self.fc_layers = nn.Sequential(
             nn.Linear(15840, 128),
@@ -792,7 +792,7 @@ def get_screen_grey(env):
 
 class ImageAgent(Agent): ### Image Agent for grey images
     def __init__(self, env_agent, model_path = 
-                 os.path.abspath('C:/Users/hatem/OneDrive/Documents/Programmation/M1-S2/PLDAC/PLDAC_BBRL/src/cnn_grey_enhanced_2500.pth')
+                 os.path.abspath('src/big_dataset_model.pth')
     
 ):
         super().__init__()
